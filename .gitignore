@@ -1,0 +1,10 @@
+# Default ignored files
+/shelf/
+/.idea/workspace.xml
+target
+.idea
+.mvn
+mvnw.cmd
+HELP.md
+/target
+
