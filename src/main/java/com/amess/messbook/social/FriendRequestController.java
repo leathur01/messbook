@@ -17,9 +17,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @RestController
 @Transactional
-public class UserRelationshipController {
+public class FriendRequestController {
 
-    private final UserRelationshipService userRelationshipService;
+    private final FriendService friendService;
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("users/self/friends/requests")
@@ -27,7 +27,7 @@ public class UserRelationshipController {
             @RequestBody @Valid FriendRequestData friendRequest,
             @AuthenticationPrincipal User sender
     ) {
-        userRelationshipService.addFriend(sender, friendRequest);
+        friendService.addFriend(sender, friendRequest);
         var response = new HashMap<String, String>();
         response.put("message", "Your friend request has been sent");
 
@@ -39,7 +39,7 @@ public class UserRelationshipController {
             @RequestParam(value = "direction", required = false, defaultValue = "incoming") String direction,
             @AuthenticationPrincipal User user
     ) {
-        return userRelationshipService.getFriendRequests(user.getId(), direction);
+        return friendService.getFriendRequests(user.getId(), direction);
     }
 
     @PutMapping("users/self/friends/{senderId}/requests/accept")
@@ -47,7 +47,7 @@ public class UserRelationshipController {
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
     ) throws NoResourceFoundException {
-        userRelationshipService.acceptRequest(receiver, senderId);
+        friendService.acceptRequest(receiver, senderId);
         var response = new HashMap<String, String>();
         response.put("message", "You have accepted a friend request from user " + senderId.toString());
 
@@ -62,7 +62,7 @@ public class UserRelationshipController {
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
     ) {
-        userRelationshipService.removeRequest(senderId, receiver.getId());
+        friendService.removeRequest(senderId, receiver.getId());
     }
 
     // Use the unique username requires complex handling when the username changes
@@ -73,6 +73,6 @@ public class UserRelationshipController {
             @PathVariable UUID receiverId,
             @AuthenticationPrincipal User sender
     ) {
-        userRelationshipService.removeRequest(sender.getId(), receiverId);
+        friendService.removeRequest(sender.getId(), receiverId);
     }
 }
