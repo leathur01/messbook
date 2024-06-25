@@ -49,7 +49,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
                     "AND user_relationship.receiver_id = :userId\n",
             nativeQuery = true
     )
-    List<User> getFriendRequestsForUser(UUID userId);
+    List<User> getReceivedFriendRequestsForUser(UUID userId);
 
     @Query(
             value = "SELECT receiver.*\n" +

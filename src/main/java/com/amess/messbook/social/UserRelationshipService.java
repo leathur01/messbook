@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,10 +37,8 @@ public class UserRelationshipService {
         }
         User receiver = optionalUser.get();
 
-//        We add ar new record into the intermediate table directly
-//        instead of adding the UserRelationship to the User and let Hibernate save to the db
-//        Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed
-//        at the time we go to the controller layer
+//        We add ar new record into the intermediate table directly instead of adding the UserRelationship to the User and let Hibernate save to the db
+//        Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed at the time we go to the controller layer
         var userRelationship = UserRelationship.builder()
                 .id(new RelationshipId(sender.getId(), receiver.getId()))
                 .sender(sender)
@@ -52,12 +51,12 @@ public class UserRelationshipService {
         userRelationshipRepository.save(userRelationship);
     }
 
-    void removeRelationship(UUID senderId, UUID receiverID) {
+    void removeRequest(UUID senderId, UUID receiverID) {
         var relationshipId = new RelationshipId(senderId, receiverID);
         userRelationshipRepository.deleteById(relationshipId);
     }
 
-    void acceptFriend(User receiver, UUID senderId) throws NoResourceFoundException {
+    void acceptRequest(User receiver, UUID senderId) throws NoResourceFoundException {
         var optionalUserRelationship = userRelationshipRepository.findById(new RelationshipId(senderId, receiver.getId()));
 
         if (optionalUserRelationship.isEmpty()) {
@@ -68,5 +67,13 @@ public class UserRelationshipService {
         userRelationship.setStatus("ACCEPTED");
         userRelationship.setUpdatedAt(LocalDateTime.now());
         userRelationshipRepository.save(userRelationship);
+    }
+
+    List <User> getFriendRequests(UUID userId, String direction) {
+        if (direction.equals("outgoing")) {
+            return userRepository.getSentFriendRequestForUser(userId);
+        }
+
+        return userRepository.getReceivedFriendRequestsForUser(userId);
     }
 }
