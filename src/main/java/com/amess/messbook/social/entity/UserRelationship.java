@@ -1,5 +1,6 @@
 package com.amess.messbook.social.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,6 +18,7 @@ public class UserRelationship {
     @EmbeddedId
     private RelationshipId id;
 
+    @JsonIgnore
     @MapsId("senderId")
     @ManyToOne(
             cascade = CascadeType.MERGE,
@@ -24,6 +26,7 @@ public class UserRelationship {
     )
     private User sender;
 
+    @JsonIgnore
     @MapsId("receiverId")
     @ManyToOne(
             cascade = CascadeType.MERGE,
@@ -36,9 +39,6 @@ public class UserRelationship {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-
-    @Transient
-    private boolean isNew = false;
 
     @Override
     public boolean equals(Object o) {

@@ -39,4 +39,26 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             nativeQuery = true
     )
     List<User> findExistedAccounts(String nickname, String email, String phoneNumber);
+
+    @Query(
+            value = "SELECT sender.*\n" +
+                    "FROM \"user\" as sender\n" +
+                    "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
+                    "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
+                    "WHERE user_relationship.status = 'PENDING'\n" +
+                    "AND user_relationship.receiver_id = :userId\n",
+            nativeQuery = true
+    )
+    List<User> getFriendRequestsForUser(UUID userId);
+
+    @Query(
+            value = "SELECT receiver.*\n" +
+                    "FROM \"user\" as sender\n" +
+                    "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
+                    "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
+                    "WHERE user_relationship.status = 'PENDING'\n" +
+                    "AND user_relationship.sender_id = :userId\n",
+            nativeQuery = true
+    )
+    List<User> getSentFriendRequestForUser(UUID userId);
 }
