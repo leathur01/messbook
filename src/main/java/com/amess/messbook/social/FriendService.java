@@ -17,7 +17,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
-public class UserRelationshipService {
+public class FriendService {
 
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
@@ -37,8 +37,8 @@ public class UserRelationshipService {
         }
         User receiver = optionalUser.get();
 
-//        We add ar new record into the intermediate table directly instead of adding the UserRelationship to the User and let Hibernate save to the db
-//        Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed at the time we go to the controller layer
+        // We add ar new record into the intermediate table directly instead of adding the UserRelationship to the User and let Hibernate save to the db
+        // Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed at the time we go to the controller layer
         var userRelationship = UserRelationship.builder()
                 .id(new RelationshipId(sender.getId(), receiver.getId()))
                 .sender(sender)
