@@ -23,15 +23,11 @@ public class FriendRequestController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("users/self/friends/requests")
-    public HashMap<String, String> sendFriendRequest(
+    public void sendFriendRequest(
             @RequestBody @Valid FriendRequestData friendRequest,
             @AuthenticationPrincipal User sender
-    ) {
+    ) throws NoResourceFoundException {
         friendService.addFriend(sender, friendRequest);
-        var response = new HashMap<String, String>();
-        response.put("message", "Your friend request has been sent");
-
-        return response;
     }
 
     @GetMapping("users/self/friends/requests")
@@ -47,7 +43,7 @@ public class FriendRequestController {
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
     ) throws NoResourceFoundException {
-        friendService.acceptRequest(receiver, senderId);
+        friendService.processRequestAcceptance(receiver, senderId);
         var response = new HashMap<String, String>();
         response.put("message", "You have accepted a friend request from user " + senderId.toString());
 

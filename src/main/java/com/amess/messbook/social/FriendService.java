@@ -22,7 +22,7 @@ public class FriendService {
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
 
-    void addFriend(User sender, FriendRequestData friendRequest) {
+    void addFriend(User sender, FriendRequestData friendRequest) throws NoResourceFoundException {
         if (sender.getNickname().equals(friendRequest.getNickname())) {
             var errorDetails = new ErrorDetails();
             errorDetails.addError("nickname", "Hm, didn't work. Double check that the username is correct.");
@@ -36,6 +36,15 @@ public class FriendService {
             throw new InvalidException(errorDetails);
         }
         User receiver = optionalUser.get();
+
+        // If the other user already sent a friend request to this user
+        // Then we simply accept it instead of sending another friend request
+        Optional<UserRelationship> existedRequest = userRelationshipRepository.findById(new RelationshipId(receiver.getId(), sender.getId()));
+        if (existedRequest.isPresent()) {
+            var userRelationship = existedRequest.get();
+            acceptRequest(userRelationship);
+            return;
+        }
 
         // We add ar new record into the intermediate table directly instead of adding the UserRelationship to the User and let Hibernate save to the db
         // Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed at the time we go to the controller layer
@@ -56,7 +65,7 @@ public class FriendService {
         userRelationshipRepository.deleteById(relationshipId);
     }
 
-    void acceptRequest(User receiver, UUID senderId) throws NoResourceFoundException {
+    void processRequestAcceptance(User receiver, UUID senderId) throws NoResourceFoundException {
         var optionalUserRelationship = userRelationshipRepository.findById(new RelationshipId(senderId, receiver.getId()));
 
         if (optionalUserRelationship.isEmpty()) {
@@ -64,9 +73,14 @@ public class FriendService {
         }
         var userRelationship = optionalUserRelationship.get();
 
+        acceptRequest(userRelationship);
+    }
+
+    private void acceptRequest(UserRelationship userRelationship) {
         userRelationship.setStatus("ACCEPTED");
         userRelationship.setUpdatedAt(LocalDateTime.now());
         userRelationshipRepository.save(userRelationship);
+
     }
 
     List <User> getFriendRequests(UUID userId, String direction) {
