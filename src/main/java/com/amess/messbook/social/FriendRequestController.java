@@ -1,24 +1,27 @@
 package com.amess.messbook.social;
 
 import com.amess.messbook.social.dto.FriendRequestData;
+import com.amess.messbook.social.dto.UserDTO;
 import com.amess.messbook.social.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @RestController
 public class FriendRequestController {
 
     private final FriendService friendService;
+    private final ModelMapper modelMapper;
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("users/self/friends/requests")
@@ -30,11 +33,13 @@ public class FriendRequestController {
     }
 
     @GetMapping("users/self/friends/requests")
-    public List<User> viewFriendRequests(
+    public List<UserDTO> viewFriendRequests(
             @RequestParam(value = "direction", required = false, defaultValue = "incoming") String direction,
             @AuthenticationPrincipal User user
     ) {
-        return friendService.getFriendRequests(user.getId(), direction);
+        return friendService.getFriendRequests(user.getId(), direction).stream()
+                .map(u -> modelMapper.map(u, UserDTO.class))
+                .collect(Collectors.toList());
     }
 
     @PutMapping("users/self/friends/{senderId}/requests/accept")
