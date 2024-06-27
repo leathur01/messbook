@@ -17,7 +17,7 @@ import java.util.UUID;
 @RestController
 public class UserController {
 
-    private final ModelMapper userMapper;
+    private final ModelMapper modelMapper;
     private final UserService userService;
     private final UserRepository userRepository;
 
@@ -35,7 +35,7 @@ public class UserController {
     @GetMapping("users/{userId}")
     public UserDTO getUser(@PathVariable UUID userId) {
         var user = userService.findById(userId);
-        var userDTO = userMapper.map(user, UserDTO.class);
+        var userDTO = modelMapper.map(user, UserDTO.class);
 
         return userDTO;
     }
@@ -51,7 +51,7 @@ public class UserController {
                 request.getBio(),
                 request.getDateOfBirth()
         );
-        var userDTO = userMapper.map(updatedUser, UserDTO.class);
+        var userDTO = modelMapper.map(updatedUser, UserDTO.class);
 
         return userDTO;
     }
