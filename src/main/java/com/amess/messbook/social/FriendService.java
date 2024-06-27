@@ -90,4 +90,8 @@ public class FriendService {
 
         return userRepository.getReceivedFriendRequestsForUser(userId);
     }
+
+    List<User> getFriends(UUID userId) {
+        return userRepository.getFriendForUser(userId);
+    }
 }

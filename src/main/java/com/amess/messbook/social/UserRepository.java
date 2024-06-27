@@ -61,4 +61,28 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             nativeQuery = true
     )
     List<User> getSentFriendRequestForUser(UUID userId);
+
+    @Query(
+            value = "SELECT\n" +
+                    "RECEIVER.*\n" +
+                    "FROM\n" +
+                    "\"user\" AS SENDER\n" +
+                    "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
+                    "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
+                    "WHERE\n" +
+                    "U_R.STATUS = 'ACCEPTED'\n" +
+                    "AND SENDER.ID = :userId\n" +
+                    "UNION\n" +
+                    "SELECT\n" +
+                    "SENDER.*\n" +
+                    "FROM\n" +
+                    "\"user\" AS SENDER\n" +
+                    "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
+                    "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
+                    "WHERE\n" +
+                    "U_R.STATUS = 'ACCEPTED'\n" +
+                    "AND RECEIVER.ID = :userId",
+            nativeQuery = true
+    )
+    List<User> getFriendForUser(UUID userId);
 }
