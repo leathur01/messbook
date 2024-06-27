@@ -18,71 +18,56 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findByPhoneNumber(String phoneNumber);
 
-    @Query(
-            value = "SELECT *\n" +
-                    "FROM \"user\" as u\n" +
-                    "INNER JOIN \"token\" as tk\n" +
-                    "ON u.id = tk.user_id\n" +
-                    "WHERE tk.hash = :hash\n" +
-                    "AND tk.scope = :scope\n" +
-                    "AND tk.expiry > :currentTime\n",
-            nativeQuery = true
-    )
+    @Query(value = "SELECT *\n" +
+            "FROM \"user\" as u\n" +
+            "INNER JOIN \"token\" as tk\n" +
+            "ON u.id = tk.user_id\n" +
+            "WHERE tk.hash = :hash\n" +
+            "AND tk.scope = :scope\n" +
+            "AND tk.expiry > :currentTime\n", nativeQuery = true)
     Optional<User> getForToken(byte[] hash, String scope, LocalDateTime currentTime);
 
-    @Query(
-            value = "SELECT *\n" +
-                    "FROM \"user\"\n" +
-                    "WHERE nickname = :nickname\n" +
-                    "OR email = :email\n" +
-                    "OR phone_number = :phoneNumber",
-            nativeQuery = true
-    )
+    @Query(value = "SELECT *\n" +
+            "FROM \"user\"\n" +
+            "WHERE nickname = :nickname\n" +
+            "OR email = :email\n" +
+            "OR phone_number = :phoneNumber", nativeQuery = true)
     List<User> findExistedAccounts(String nickname, String email, String phoneNumber);
 
-    @Query(
-            value = "SELECT sender.*\n" +
-                    "FROM \"user\" as sender\n" +
-                    "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
-                    "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
-                    "WHERE user_relationship.status = 'PENDING'\n" +
-                    "AND user_relationship.receiver_id = :userId\n",
-            nativeQuery = true
-    )
+    @Query(value = "SELECT sender.*\n" +
+            "FROM \"user\" as sender\n" +
+            "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
+            "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
+            "WHERE user_relationship.status = 'PENDING'\n" +
+            "AND user_relationship.receiver_id = :userId\n", nativeQuery = true)
     List<User> getReceivedFriendRequestsForUser(UUID userId);
 
-    @Query(
-            value = "SELECT receiver.*\n" +
-                    "FROM \"user\" as sender\n" +
-                    "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
-                    "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
-                    "WHERE user_relationship.status = 'PENDING'\n" +
-                    "AND user_relationship.sender_id = :userId\n",
-            nativeQuery = true
-    )
+    @Query(value = "SELECT receiver.*\n" +
+            "FROM \"user\" as sender\n" +
+            "JOIN user_relationship ON user_relationship.sender_id = sender.id\n" +
+            "JOIN \"user\" as receiver ON user_relationship.receiver_id = receiver.id\n" +
+            "WHERE user_relationship.status = 'PENDING'\n" +
+            "AND user_relationship.sender_id = :userId\n", nativeQuery = true)
     List<User> getSentFriendRequestForUser(UUID userId);
 
-    @Query(
-            value = "SELECT\n" +
-                    "RECEIVER.*\n" +
-                    "FROM\n" +
-                    "\"user\" AS SENDER\n" +
-                    "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
-                    "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
-                    "WHERE\n" +
-                    "U_R.STATUS = 'ACCEPTED'\n" +
-                    "AND SENDER.ID = :userId\n" +
-                    "UNION\n" +
-                    "SELECT\n" +
-                    "SENDER.*\n" +
-                    "FROM\n" +
-                    "\"user\" AS SENDER\n" +
-                    "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
-                    "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
-                    "WHERE\n" +
-                    "U_R.STATUS = 'ACCEPTED'\n" +
-                    "AND RECEIVER.ID = :userId",
-            nativeQuery = true
-    )
+    @Query(value = "SELECT\n" +
+            "RECEIVER.*\n" +
+            "FROM\n" +
+            "\"user\" AS SENDER\n" +
+            "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
+            "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
+            "WHERE\n" +
+            "U_R.STATUS = 'ACCEPTED'\n" +
+            "AND SENDER.ID = :userId\n" +
+            "UNION\n" +
+            "SELECT\n" +
+            "SENDER.*\n" +
+            "FROM\n" +
+            "\"user\" AS SENDER\n" +
+            "JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID\n" +
+            "JOIN \"user\" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID\n" +
+            "WHERE\n" +
+            "U_R.STATUS = 'ACCEPTED'\n" +
+            "AND RECEIVER.ID = :userId", nativeQuery = true)
     List<User> getFriendForUser(UUID userId);
 }

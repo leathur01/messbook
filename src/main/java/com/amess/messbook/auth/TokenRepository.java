@@ -14,12 +14,9 @@ public interface TokenRepository extends JpaRepository<Token, String> {
 
     @Transactional
     @Modifying
-    @Query(
-            value = "DELETE\n" +
-                    "FROM \"token\" AS tk\n" +
-                    "WHERE tk.user_id = :userId\n" +
-                    "AND tk.scope = :scope",
-            nativeQuery = true
-    )
+    @Query(value = "DELETE\n" +
+            "FROM \"token\" AS tk\n" +
+            "WHERE tk.user_id = :userId\n" +
+            "AND tk.scope = :scope", nativeQuery = true)
     void deleteAllForUser(UUID userId, String scope);
 }
