@@ -16,7 +16,6 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-@Transactional
 public class FriendRequestController {
 
     private final FriendService friendService;
