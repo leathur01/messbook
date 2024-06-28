@@ -70,4 +70,34 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             "U_R.STATUS = 'ACCEPTED'\n" +
             "AND RECEIVER.ID = :userId", nativeQuery = true)
     List<User> getFriendForUser(UUID userId);
+
+    @Query(value = """
+            SELECT RECEIVER.*
+            FROM "user" AS SENDER
+            JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID
+            JOIN "user" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID
+            WHERE U_R.STATUS = 'ACCEPTED' AND SENDER.ID = :firstUserId
+            UNION
+            SELECT SENDER.*
+            FROM "user" AS SENDER
+            JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID
+            JOIN "user" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID
+            WHERE U_R.STATUS = 'ACCEPTED' AND RECEIVER.ID = :firstUserId
+            
+            INTERSECT
+            
+            SELECT RECEIVER.*
+            FROM "user" AS SENDER
+            JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID
+            JOIN "user" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID
+            WHERE U_R.STATUS = 'ACCEPTED' AND SENDER.ID = :secondUserId
+            UNION
+            SELECT SENDER.*
+            FROM "user" AS SENDER
+            JOIN USER_RELATIONSHIP AS U_R ON U_R.SENDER_ID = SENDER.ID
+            JOIN "user" AS RECEIVER ON U_R.RECEIVER_ID = RECEIVER.ID
+            WHERE U_R.STATUS = 'ACCEPTED' AND RECEIVER.ID = :secondUserId
+            """, nativeQuery = true)
+    List<User> getMutualFriendsForTwoUsers(UUID firstUserId, UUID secondUserId);
+
 }

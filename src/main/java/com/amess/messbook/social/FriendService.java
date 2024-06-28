@@ -94,4 +94,8 @@ public class FriendService {
     List<User> getFriends(UUID userId) {
         return userRepository.getFriendForUser(userId);
     }
+
+    List<User> getMutualFriendsForTwoUsers(UUID firstUserId, UUID secondUserId) {
+        return userRepository.getMutualFriendsForTwoUsers(firstUserId, secondUserId);
+    }
 }

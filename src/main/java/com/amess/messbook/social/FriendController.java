@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 public class FriendController {
 
     private final FriendService friendService;
-    private final UserRelationshipRepository userRelationshipRepository;
     private final ModelMapper modelMapper;
 
     @GetMapping("users/self/friends")
@@ -31,6 +30,15 @@ public class FriendController {
     @GetMapping("users/{userId}/friends")
     public List<UserDTO> viewFriendsOf(@PathVariable UUID userId) {
         return friendService.getFriends(userId).stream()
+                .map(u -> modelMapper.map(u, UserDTO.class))
+                .collect(Collectors.toList());
+    }
+
+    @GetMapping("users/self/friends/{friendId}/mutual")
+    public List<UserDTO> viewMutualFriends(
+            @PathVariable UUID friendId,
+            @AuthenticationPrincipal User user) {
+        return friendService.getMutualFriendsForTwoUsers(user.getId(), friendId).stream()
                 .map(u -> modelMapper.map(u, UserDTO.class))
                 .collect(Collectors.toList());
     }
