@@ -42,7 +42,7 @@ public class FriendRequestController {
                 .collect(Collectors.toList());
     }
 
-    @PutMapping("users/self/friends/{senderId}/requests/accept")
+    @PutMapping("users/self/friends/requests/{senderId}/accept")
     public HashMap<String, String> acceptFriendRequest(
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
@@ -57,22 +57,22 @@ public class FriendRequestController {
     // Use Put method for denying and canceling instead of Delete method because this would expose our implementation where we delete a record in the user_relationship table
     // Use Put method for both endpoint would be more user-friendly
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("users/self/friends/{senderId}/requests/deny")
+    @PutMapping("users/self/friends/requests/{senderId}/deny")
     public void denyFriendRequest(
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
     ) {
-        friendService.removeRelationship(senderId, receiver.getId());
+        friendService.removeFriendRequest(senderId, receiver.getId());
     }
 
     // Use the unique username requires complex handling when the username changes
     // So we use the user's id for ease of development
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("users/self/friends/{receiverId}/requests/cancel")
+    @PutMapping("users/self/friends/requests/{receiverId}/cancel")
     public void cancleFriendRequest(
             @PathVariable UUID receiverId,
             @AuthenticationPrincipal User sender
     ) {
-        friendService.removeRelationship(sender.getId(), receiverId);
+        friendService.removeFriendRequest(sender.getId(), receiverId);
     }
 }
