@@ -39,10 +39,21 @@ public class FriendService {
 
         // If the other user already sent a friend request to this user
         // Then we simply accept it instead of sending another friend request
-        Optional<UserRelationship> existedRequest = userRelationshipRepository.findById(new RelationshipId(receiver.getId(), sender.getId()));
-        if (existedRequest.isPresent()) {
-            var userRelationship = existedRequest.get();
-            acceptRequest(userRelationship);
+        Optional<UserRelationship> optionalUserRelationship = userRelationshipRepository.findByUnorderedId(receiver.getId(), sender.getId());
+        if (optionalUserRelationship.isPresent()) {
+            var existedRelationship = optionalUserRelationship.get();
+
+            if (isRequestAlreadySentBy(receiver, existedRelationship) && existedRelationship.getStatus().equals("PENDING")) {
+                acceptRequest(existedRelationship);
+                return;
+
+            } else if (existedRelationship.getStatus().equals("ACCEPTED")) {
+                var errorDetails = new ErrorDetails();
+                errorDetails.addError("nickname", "You're already friends with that user");
+                throw new InvalidException(errorDetails);
+            }
+
+            // If the request has been sent before, then return
             return;
         }
 
@@ -60,9 +71,17 @@ public class FriendService {
         userRelationshipRepository.save(userRelationship);
     }
 
-    void removeRelationship(UUID senderId, UUID receiverID) {
+    private boolean isRequestAlreadySentBy(User user, UserRelationship existedRelationship) {
+        return existedRelationship.getId().getSenderId().equals(user.getId());
+    }
+
+    void removeFriendRequest(UUID senderId, UUID receiverID) {
         var relationshipId = new RelationshipId(senderId, receiverID);
         userRelationshipRepository.deleteById(relationshipId);
+    }
+
+    void unfriend(UUID userId, UUID friendId) {
+        userRelationshipRepository.deleteByUnorderedId(userId, friendId);
     }
 
     void processRequestAcceptance(User receiver, UUID senderId) throws NoResourceFoundException {
@@ -83,7 +102,7 @@ public class FriendService {
 
     }
 
-    List <User> getFriendRequests(UUID userId, String direction) {
+    List<User> getFriendRequests(UUID userId, String direction) {
         if (direction.equals("outgoing")) {
             return userRepository.getSentFriendRequestForUser(userId);
         }
