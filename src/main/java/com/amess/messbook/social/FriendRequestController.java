@@ -62,7 +62,7 @@ public class FriendRequestController {
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
     ) {
-        friendService.removeRequest(senderId, receiver.getId());
+        friendService.removeRelationship(senderId, receiver.getId());
     }
 
     // Use the unique username requires complex handling when the username changes
@@ -73,6 +73,6 @@ public class FriendRequestController {
             @PathVariable UUID receiverId,
             @AuthenticationPrincipal User sender
     ) {
-        friendService.removeRequest(sender.getId(), receiverId);
+        friendService.removeRelationship(sender.getId(), receiverId);
     }
 }

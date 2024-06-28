@@ -60,7 +60,7 @@ public class FriendService {
         userRelationshipRepository.save(userRelationship);
     }
 
-    void removeRequest(UUID senderId, UUID receiverID) {
+    void removeRelationship(UUID senderId, UUID receiverID) {
         var relationshipId = new RelationshipId(senderId, receiverID);
         userRelationshipRepository.deleteById(relationshipId);
     }
