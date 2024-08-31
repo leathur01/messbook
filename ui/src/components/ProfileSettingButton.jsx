@@ -62,7 +62,7 @@ export default function ProfileSettingButton({ handleOpen, user }) {
                             textTransform: 'none',
                             fontWeight: '500',
                             fontSize: '16px',
-                            width: '80px',
+                            width: '100px',
                             overflow: 'hidden',
                             whiteSpace: 'nowrap',
                             textOverflow: 'ellipsis',
