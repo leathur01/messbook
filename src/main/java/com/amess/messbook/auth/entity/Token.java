@@ -25,7 +25,6 @@ public class Token implements Persistable<byte[]> {
 
     @Transient
     @JsonProperty("token")
-    @Size(min = 26, max = 26, message = "token must be 26 byte long")
     @NotNull(message = "token must be provided")
     private String plainText;
 

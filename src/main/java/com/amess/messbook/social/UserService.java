@@ -109,7 +109,7 @@ public class UserService {
             }
         }
 
-        return user;
+        return save(user);
     }
 
     private boolean isExistedByNickname(String nickname) {
@@ -135,7 +135,7 @@ public class UserService {
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
             ErrorDetails errorDetails = new ErrorDetails();
-            errorDetails.addError("error", "password does not match");
+            errorDetails.addError("password", "Password does not match");
             throw new InvalidException(errorDetails);
         }
 

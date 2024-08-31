@@ -36,7 +36,6 @@ public class UserController {
     public UserDTO getUser(@PathVariable UUID userId) {
         var user = userService.findById(userId);
         var userDTO = modelMapper.map(user, UserDTO.class);
-
         return userDTO;
     }
 
@@ -51,25 +50,20 @@ public class UserController {
                 request.getBio(),
                 request.getDateOfBirth()
         );
-        var userDTO = modelMapper.map(updatedUser, UserDTO.class);
-
-        return userDTO;
+        return modelMapper.map(updatedUser, UserDTO.class);
     }
 
     @PutMapping("users/{userId}/nickname")
-    public HashMap<String, String> updateNickname(
+    public UserDTO updateNickname(
             @PathVariable UUID userId,
             @RequestBody @Valid NicknameUpdateData request
     ) throws NoResourceFoundException {
-        var user = userService.updateNickname(
+        var updatedUser = userService.updateNickname(
                 userId,
                 request.getPassword(),
                 request.getNewNickname()
         );
-        var response = new HashMap<String, String>();
-        response.put("message", user.getNickname() + " is your new nickname");
-
-        return response;
+        return modelMapper.map(updatedUser, UserDTO.class);
     }
 
     // Update password but requiring re-authentication using the old password

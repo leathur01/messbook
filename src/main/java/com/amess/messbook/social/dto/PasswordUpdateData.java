@@ -12,7 +12,6 @@ import lombok.Setter;
 public class PasswordUpdateData {
 
     @NotNull
-    @Size(min = 12, max = 128, message="Password should be at least 8 and no more than 128 characters")
     private String currentPassword;
 
     @NotNull

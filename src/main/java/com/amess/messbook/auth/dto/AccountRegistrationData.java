@@ -1,10 +1,7 @@
 package com.amess.messbook.auth.dto;
 
 import com.amess.messbook.util.validation.DateOfBirthConstraint;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,7 +28,9 @@ public class AccountRegistrationData {
             message="Password should be at least 8 and no more than 128 characters")
     private String password;
 
-    @Pattern(regexp = "^(?:[0-9] ?){6,14}[0-9]$", message = "Please enter a valid phone number")
+    // Tham dinh dang dien thoai o wiki va trang sau
+    // https://thuvienphapluat.vn/phap-luat/ho-tro-phap-luat/danh-sach-dau-so-dien-thoai-viet-nam-cua-cac-nha-mang-hien-nay-ma-vung-so-dien-thoai-viet-nam-la-ba-576719-134504.html#google_vignette
+    @Pattern(regexp = "^(\\+84|0)(3|5|7|8|9)[0-9]{8}$", message = "Please enter a valid phone number")
     private String phoneNumber;
 
     @NotNull

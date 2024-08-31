@@ -37,7 +37,7 @@ public class ExceptionHandlerFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } catch (MalformedJwtException |InvalidAuthenticationTokenException | ExpiredJwtException | SignatureException ex) {
             var errorDetails = new ErrorDetails();
-            errorDetails.addError("error", "invalid or expired activation token");
+            errorDetails.addError("token", "invalid or expired activation token");
             response.setStatus(HttpStatus.BAD_REQUEST.value());
             errorResponse(request, response, errorDetails);
 

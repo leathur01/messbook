@@ -19,6 +19,5 @@ public class NicknameUpdateData {
     private String newNickname;
 
     @NotNull
-    @Size(min = 12, max = 128, message="Password must be at least 8 and no more than 128 characters")
     private String password;
 }
