@@ -30,8 +30,9 @@ public class SecurityFilterConfig {
                         .requestMatchers(
                                 "/register",
                                 "/activate",
+                                "/password-reset",
                                 "/log-in",
-                                "/users/password-reset"
+                                "users/reset-password"
                         )
                         .permitAll()
                         .anyRequest()

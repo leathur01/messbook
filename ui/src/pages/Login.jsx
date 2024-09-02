@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Diversity2OutlinedIcon from '@mui/icons-material/Diversity2Outlined';
 import Diversity1OutlinedIcon from '@mui/icons-material/Diversity1Outlined';
-import { Alert, Collapse, IconButton, useMediaQuery } from '@mui/material';
+import { Alert, Collapse, IconButton, Typography, useMediaQuery } from '@mui/material';
 import { useTheme } from '@emotion/react';
 import { Fragment, useState } from 'react';
 import axios from 'axios';
@@ -18,6 +18,7 @@ import { useAuth } from '../provider/AuthProvider';
 import Loading from './Loading';
 import CircularProgress from '@mui/material/CircularProgress';
 import { jwtDecode } from 'jwt-decode';
+import PasswordResetForm from '../components/PasswordRequestForm';
 
 const Login = () => {
 	const initialFormData = {
@@ -36,6 +37,7 @@ const Login = () => {
 	const [isError, setIsError] = useState(false)
 	const [loadingScreen, setLoadingScreen] = useState(true)
 	const { setToken, setIsActivated } = useAuth();
+	const [forgotPassword, setForgotPassword] = useState(false)
 
 	// Access the website
 	setTimeout(() => {
@@ -85,8 +87,12 @@ const Login = () => {
 					setIsLoading(false)
 				} catch (error) {
 					const loginErrors = error.response.data.errors.error
-					if (loginErrors) {
-						setErrors({ error: loginErrors })
+					const emailError = error.response.data.errors.email
+					if (loginErrors || emailError) {
+						setErrors({
+							error: loginErrors,
+							email: emailError
+						})
 						setFormData({ ...formData, password: '' })
 						setTimeout(() => {
 							setIsLoading(false)
@@ -95,7 +101,7 @@ const Login = () => {
 						setTimeout(() => {
 							setErrors({})
 						}, 4 * 1000)
-					} else {						
+					} else {
 						setIsError(true)
 					}
 				}
@@ -215,9 +221,11 @@ const Login = () => {
 								</Button>
 								<Grid container>
 									<Grid item xs>
-										<Link href="#" variant="body2">
-											Forgot password?
-										</Link>
+										<Button onClick={() => { setForgotPassword(true) }}>
+											<Typography variant='body2' sx={{ textTransform: 'none' }}>
+												Forgot password?
+											</Typography>
+										</Button>
 									</Grid>
 									<Grid item>
 										<Link href="/register" variant="body2">
@@ -228,6 +236,8 @@ const Login = () => {
 							</Box>
 						</Box>
 					</Grid>
+
+					<PasswordResetForm forgotPassword={forgotPassword} setForgotPassword={setForgotPassword} />
 				</Grid>
 			)}
 		</Fragment>

@@ -39,9 +39,7 @@ public class JwtFilter extends OncePerRequestFilter {
         // Users have to authenticated to log out (revoke their jwt authentication token)
         // This will prevent malicious users to revoke a stolen token
         String authHeader = request.getHeader("Authorization");
-        if (!isCredentialRequired(request.getServletPath())
-                || authHeader == null
-                || !authHeader.startsWith("Bearer ")
+        if (authHeader == null || !authHeader.startsWith("Bearer ")
         ) {
             filterChain.doFilter(request, response);
             return;
@@ -75,13 +73,5 @@ public class JwtFilter extends OncePerRequestFilter {
         SecurityContextHolder.setContext(context);
 
         filterChain.doFilter(request, response);
-    }
-
-    private boolean isCredentialRequired(String path) {
-
-        Collection<String> values = List.of("/activate", "/log-in", "/register", "/password-reset");
-        List<String> unauthenticatedPaths = new ArrayList<>(values);
-
-        return !unauthenticatedPaths.contains(path);
     }
 }
