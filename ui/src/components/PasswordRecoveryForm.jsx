@@ -34,7 +34,6 @@ const PasswordRecoveryForm = ({ hasPasswordToken, setHasPasswordToken, handlePre
         return errors
     }
 
-    console.log(serverError)
     const handleSubmit = async (event) => {   
         event.preventDefault()
         const validationErrors = validate()
