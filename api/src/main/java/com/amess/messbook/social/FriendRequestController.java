@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -37,12 +38,16 @@ public class FriendRequestController {
             @RequestParam(value = "direction", required = false, defaultValue = "incoming") String direction,
             @AuthenticationPrincipal User user
     ) {
-        return friendService.getFriendRequests(user.getId(), direction).stream()
-                .map(u -> modelMapper.map(u, UserDTO.class))
-                .collect(Collectors.toList());
+        if (direction.equals("incoming") || direction.equals("outgoing")) {
+            return friendService.getFriendRequests(user.getId(), direction).stream()
+                    .map(u -> modelMapper.map(u, UserDTO.class))
+                    .collect(Collectors.toList());
+        }
+        throw new HttpMessageNotReadableException("");
     }
 
-    @PutMapping("users/self/friends/requests/{senderId}/accept")
+    // Use Post request for an action. Reference of POST git/star for starring a repository
+    @PostMapping("users/self/friends/requests/{senderId}/accept")
     public HashMap<String, String> acceptFriendRequest(
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
@@ -57,7 +62,7 @@ public class FriendRequestController {
     // Use Put method for denying and canceling instead of Delete method because this would expose our implementation where we delete a record in the user_relationship table
     // Use Put method for both endpoint would be more user-friendly
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("users/self/friends/requests/{senderId}/deny")
+    @PostMapping("users/self/friends/requests/{senderId}/deny")
     public void denyFriendRequest(
             @PathVariable UUID senderId,
             @AuthenticationPrincipal User receiver
@@ -68,7 +73,7 @@ public class FriendRequestController {
     // Use the unique username requires complex handling when the username changes
     // So we use the user's id for ease of development
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @PutMapping("users/self/friends/requests/{receiverId}/cancel")
+    @PostMapping("users/self/friends/requests/{receiverId}/cancel")
     public void cancleFriendRequest(
             @PathVariable UUID receiverId,
             @AuthenticationPrincipal User sender
