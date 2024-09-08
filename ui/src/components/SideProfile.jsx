@@ -1,7 +1,7 @@
 import { Avatar, Box, Card, CardMedia, Grid, Typography } from "@mui/material";
 import StyledBadge from "./StyledBadge";
 
-export default function SideProfile() {
+export default function SideProfile({ friend }) {
     return (
         <Card sx={{
             height: '100vh',
@@ -42,7 +42,7 @@ export default function SideProfile() {
                     marginBottom: '5px',
                     fontSize: '35px'
                 }}>
-                    xiaochangmeng
+                    {friend.nickname}
                 </Typography>
 
                 <Box sx={{
@@ -61,7 +61,7 @@ export default function SideProfile() {
                                 </Typography>
 
                                 <Typography variant="subtitle11" sx={{ fontWeight: '300' }}>
-                                    Sun Wukong
+                                    {friend.bio}
                                 </Typography>
                             </Box>
                         </Grid>

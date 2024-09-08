@@ -1,17 +1,21 @@
 package com.amess.messbook.social;
 
+import com.amess.messbook.notification.Device;
+import com.amess.messbook.notification.DeviceRepository;
 import com.amess.messbook.social.dto.*;
 import com.amess.messbook.social.entity.User;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.Message;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @RestController
@@ -20,6 +24,8 @@ public class UserController {
     private final ModelMapper modelMapper;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final FirebaseMessaging firebaseMessaging;
+    private final DeviceRepository deviceRepository;
 
     @GetMapping("/")
     public String hello() {
@@ -33,9 +39,31 @@ public class UserController {
     }
 
     @GetMapping("users/{userId}")
-    public UserDTO getUser(@PathVariable UUID userId) {
-        var user = userService.findById(userId);
-        var userDTO = modelMapper.map(user, UserDTO.class);
+    public UserDTO getUser(@PathVariable UUID userId) throws NoResourceFoundException {
+        Optional<User> optionalUser = userService.findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
+        }
+
+        var user = optionalUser.get();
+        List<Device> devicesOfUser = deviceRepository.findByUserId(userId);
+        for (Device device : devicesOfUser) {
+            Message message = Message.builder()
+                    .putData("title", "A new friend request")
+                    .putData("body", user.getNickname())
+                    .setToken(device.getDeviceToken())
+                    .build();
+
+            String sentMessage = "";
+            try {
+                sentMessage= firebaseMessaging.send(message);
+            } catch (FirebaseMessagingException e) {
+                deviceRepository.deleteById(device.getId());
+            }
+            System.out.println("Successfully sent message: " + sentMessage);
+        }
+
+        var userDTO = modelMapper.map(optionalUser.get(), UserDTO.class);
         return userDTO;
     }
 

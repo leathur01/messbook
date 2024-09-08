@@ -1,6 +1,6 @@
 import { Typography, Box, Button, Container } from "@mui/material";
 
-const FriendPanelCallOut = ({ setFriendValue }) => {
+const FriendPanelCallOut = ({ setFriendTab }) => {
     return (
         <Container maxWidth="sm" component='main' sx={{
             display: 'flex',
@@ -33,7 +33,7 @@ const FriendPanelCallOut = ({ setFriendValue }) => {
                     color='success'
                     variant='contained'
                     size='small'
-                    onClick={() => { setFriendValue(3) }}
+                    onClick={() => { setFriendTab(3) }}
                 >
                     Add Friend
                 </Button>

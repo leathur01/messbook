@@ -41,4 +41,15 @@ CREATE TABLE user_relationship (
 	PRIMARY KEY (sender_id, receiver_id),
     FOREIGN KEY (sender_id) REFERENCES "user"(id),
     FOREIGN KEY (receiver_id) REFERENCES "user"(id)
-)
+);
+
+DROP TABLE IF EXISTS device;
+CREATE TABLE device (
+	id uuid default uuid_generate_v4(),
+	device_token varchar,
+	user_id uuid,
+	token_issued_at timestamp(0) NOT NULL,
+	PRIMARY KEY (id),
+	FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+);
+

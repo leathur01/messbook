@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { Stack, Tabs, Tab, Typography, Box, styled, Avatar, Dialog } from "@mui/material";
+import { Stack, Tabs, Tab, Typography, Box, styled, Avatar, Dialog, Alert } from "@mui/material";
 import ConnectWithoutContactOutlinedIcon from '@mui/icons-material/ConnectWithoutContactOutlined';
 import StyledBadge from "../components/StyledBadge";
 import UserProfile from "./UserProfile";
@@ -12,56 +12,48 @@ import { Navigate } from "react-router-dom";
 import Loading from "./Loading";
 import { useAuth } from "../provider/AuthProvider";
 import LoadingButton from "../components/LoadingButton";
+import NotificationStatus from "../components/NotificationStatus";
+import { getToken } from "firebase/messaging";
+import { messaging } from "../notifications/firebase";
 
-const tabData = [
-    {
-        nickname: 'doggo',
-        avatar: '/src/assets/avatar/doggo.jpg'
-    },
-    {
-        nickname: 'ha',
-        avatar: '/src/assets/avatar/doggo.jpg'
-    },
-    {
-        nickname: 'KN',
-        avatar: '/src/assets/avatar/doggo.jpg'
-    },
-];
+const { VITE_APP_VAPID_KEY } = import.meta.env;
 
 export default function HomePage() {
-    const [value, setValue] = React.useState(0);
+    const [chatTab, setChatTab] = React.useState(0);
     const [open, setOpen] = useState(false)
     const [user, setUser] = useState({})
     const [isLoading, setIsLoading] = useState(false);
     const [isError, setIsError] = useState(false);
     const { token, setIsActivated } = useAuth()
     const [isTokenValid, setIsTokenValid] = useState(true)
+    const [notificationStatus, setNotificationStatus] = useState(Notification.permission)
+    const [friends, setFriends] = useState([])
 
     useEffect(() => {
+        let decoded = jwtDecode(token)
         const fetchUser = async () => {
             setIsError(false)
             setIsLoading(true)
-
-            let decoded = jwtDecode(token)
             try {
-                const response = await axios.get(
+                let response = await axios.get(
                     `http://localhost:8080/users/${decoded.sub}`,
-                    {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    }
+                    { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 setUser(response.data)
                 setIsActivated(response.data.activated)
+
+                response = await axios.get(
+                    `http://localhost:8080/users/self/friends`,
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                setFriends(response.data)
             } catch (error) {
                 const tokenError = error.response.data.errors.token
                 if (tokenError) {
                     setIsTokenValid(false)
                 } else {
                     setIsError(true)
-
-                }                
+                }
             }
             // Make the user flow more ease
             setTimeout(() => {
@@ -69,6 +61,38 @@ export default function HomePage() {
             }, 0.75 * 1000)
         }
 
+        const sendDeviceToken = async () => {
+            let permission = Notification.permission
+            if (!("Notification" in window)) {
+                // Check if the browser supports notifications
+                alert("This browser does not support desktop notification");
+            } else if (permission === "default") {
+                permission = await Notification.requestPermission()
+                // Handle Default case, which the browser won't reload after choosing notification setting
+                setNotificationStatus(permission)
+            }
+            if (permission === "granted") {
+                try {
+                    // Ignore the 404 response from firebase after every notification permission reset or opt-in 
+                    // Because Firebase tries to delete the old token when creating a new token but somehow the old token could not be found
+                    const deviceToken = await getToken(messaging, { vapidKey: VITE_APP_VAPID_KEY });
+                    const response = await axios.post(
+                        'http://localhost:8080/users/devices',
+                        { deviceToken: deviceToken, userId: decoded.sub },
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        }
+                    )
+                    console.log(response.data)
+                } catch (error) {
+                    setIsError(true)
+                }
+            }
+        }
+
+        sendDeviceToken()
         fetchUser()
     }, [])
 
@@ -91,13 +115,15 @@ export default function HomePage() {
                     <Stack direction='column' justifyContent='space-between'>
                         <Tabs
                             orientation="vertical"
-                            value={value}
-                            onChange={(_event, newValue) => {
-                                setValue(newValue)
+                            value={chatTab}
+                            onChange={(event, newValue) => {
+                                console.log(newValue)
+                                setChatTab(newValue)
                             }}
                         >
                             <StyledTab
                                 sx={{ alignItems: 'flex-start', marginTop: '-1px' }}
+                                value={0}
                                 label={
                                     <Stack direction='row' gap={1} alignItems='center'>
                                         <ConnectWithoutContactOutlinedIcon fontSize="large" sx={{ color: '#674188', width: 35, height: 35 }} />
@@ -111,15 +137,16 @@ export default function HomePage() {
                                     </Stack>
                                 } />
 
-                            {tabData.map((tab, index) => (
+                            {friends.map((friend, index) => (
                                 <StyledTab
                                     sx={{ alignItems: 'flex-start' }}
+                                    value={friend.id}
                                     key={index}
                                     label={
                                         <Stack direction='row' gap={1} alignItems='center'>
                                             <StyledBadge dot={true}>
                                                 <Avatar
-                                                    src={tab.avatar}
+                                                    src='/src/assets/avatar/doggo.jpg'
                                                     sx={{ width: 35, height: 35 }}
                                                 >
                                                 </Avatar>
@@ -127,7 +154,7 @@ export default function HomePage() {
                                             <Typography sx={{
                                                 textTransform: 'none',
                                             }}>
-                                                {tab.nickname}
+                                                {friend.nickname}
                                             </Typography>
                                         </Stack>
                                     } />
@@ -135,16 +162,27 @@ export default function HomePage() {
                             ))}
                         </Tabs>
 
-                        <ProfileSettingButton handleOpen={handleOpen} user={user} />
+                        <Stack>
+                            <Alert severity="" color='' variant="">
+                                <NotificationStatus status={notificationStatus} setNotificationStatus={setNotificationStatus} />
+                            </Alert>
+                            <ProfileSettingButton handleOpen={handleOpen} user={user} />
+                        </Stack>
                     </Stack>
 
 
-                    <FriendPanelContainer value={value} index={0} />
+                    <FriendPanelContainer
+                        value={chatTab}
+                        index={0}
+                        setFriends={setFriends}
+                        friends={friends}
+                        setChatTab={setChatTab}
+                    />
 
                     {/* Index + 1 is used to skip through the first friend tab */}
-                    {tabData.map((tab, index) => (
-                        <ChatBox key={index} value={value} index={index + 1}>
-                            {tab.nickname}
+                    {friends.map((friend, index) => (
+                        <ChatBox key={index} value={chatTab} index={friend.id} friend={friend}>
+                            {friend.nickname}
                         </ChatBox>
                     ))}
                 </Stack>
@@ -163,7 +201,7 @@ export default function HomePage() {
                 <Box sx={{
                     backgroundColor: 'white',
                     padding: 4,
-                    borderRadius: '10px',                        
+                    borderRadius: '10px',
                 }}>
                     <Typography sx={
                         {
@@ -172,11 +210,11 @@ export default function HomePage() {
                             textAlign: 'center',
                             marginBottom: '20px'
                         }}>
-                        Your token has been expiered 
-                        <br/>
+                        Your token has been expiered
+                        <br />
                         or may have become invalid
                     </Typography>
-                    <Stack direction='row' justifyContent='space-around'>                      
+                    <Stack direction='row' justifyContent='space-around'>
                         <LoadingButton isLogOut={true} />
                     </Stack>
                 </Box>

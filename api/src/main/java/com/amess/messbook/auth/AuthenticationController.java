@@ -1,8 +1,8 @@
 package com.amess.messbook.auth;
 
+import com.amess.messbook.auth.dto.AccountRegistrationData;
 import com.amess.messbook.auth.dto.AuthenticationData;
 import com.amess.messbook.auth.dto.PasswordRecoveryRequest;
-import com.amess.messbook.auth.dto.AccountRegistrationData;
 import com.amess.messbook.auth.entity.Token;
 import com.amess.messbook.social.dto.UserDTO;
 import jakarta.mail.MessagingException;

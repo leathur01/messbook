@@ -2,16 +2,51 @@ import { Typography, Box } from "@mui/material";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import FriendPanel from "./FriendPanel";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import AddFriendTab from "./AddFriendTab";
+import FriendRequestTab from "./FriendRequestTab";
+import { useAuth } from "../provider/AuthProvider";
+import axios from "axios";
+import AllFriendsTab from "./AllFriendsTab";
 
-const friendTabLabels = ['Online', 'All', 'Pending', 'Add Friend']
+const friendTabLabels = ['Online',]
 
-export default function FriendPanelContainer({ value, index}) {
-    const [friendValue, setFriendValue] = React.useState(0)
+export default function FriendPanelContainer({
+    value,
+    index,
+    setFriends,
+    friends,
+    setChatTab
+}) {
+    const [friendTab, setFriendTab] = React.useState(0)
+    const { token } = useAuth()
+    const [inComingRequests, setInComingRequests] = useState([])
+    const [outGoingRequests, setOutGoingRequests] = useState([])
 
     const handleChange = (event, newValue) => {
-        setFriendValue(newValue)
-    }  
+        setFriendTab(newValue)
+    }
+
+    useEffect(() => {
+        const fetchRequests = async () => {
+            try {
+                let response = await axios.get(
+                    'http://localhost:8080/users/self/friends/requests?direction=incoming',
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                setInComingRequests(response.data)
+                response = await axios.get(
+                    'http://localhost:8080/users/self/friends/requests?direction=outgoing',
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                setOutGoingRequests(response.data)
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchRequests()
+    }, [])
 
     return (
         value === index && (
@@ -22,7 +57,7 @@ export default function FriendPanelContainer({ value, index}) {
                 flexDirection: 'column'
             }}>
                 <Tabs
-                    value={friendValue}
+                    value={friendTab}
                     onChange={handleChange}
                     sx={{
                         width: '100%',
@@ -41,18 +76,67 @@ export default function FriendPanelContainer({ value, index}) {
                             }
                         />
                     ))}
+                    <Tab
+                        label={
+                            <Typography sx={{
+                                textTransform: 'none',
+                            }}>
+                                All
+                            </Typography>
+                        }
+                    />
+                    <Tab
+                        label={
+                            <Typography sx={{
+                                textTransform: 'none',
+                            }}>
+                                Pending
+                            </Typography>
+                        }
+                    />
+                    <Tab
+                        label={
+                            <Typography sx={{
+                                textTransform: 'none',
+                            }}>
+                                Add Friend
+                            </Typography>
+                        }
+                    />
                 </Tabs>
-                
+
                 {friendTabLabels.map((label, index) => (
                     <FriendPanel
                         key={index}
-                        value={friendValue}
+                        value={friendTab}
                         index={index}
-                        setFriendValue={setFriendValue}
+                        setFriendTab={setFriendTab}
                     >
                         {label}
                     </FriendPanel>
                 ))}
+
+                <FriendPanel value={friendTab} index={1} setFriendTab={setFriendTab}>
+                    <AllFriendsTab friends={friends} setChatTab={setChatTab} setFriends={setFriends} />
+                </FriendPanel>
+
+                <FriendPanel value={friendTab} index={2} setFriendTab={setFriendTab} >
+                    <FriendRequestTab
+                        inComingRequests={inComingRequests}
+                        outGoingRequests={outGoingRequests}
+                        setInComingRequests={setInComingRequests}
+                        setOutGoingRequests={setOutGoingRequests}
+                        setFriends={setFriends}
+                    />
+                </FriendPanel>
+
+                <FriendPanel value={friendTab} index={3} setFriendTab={setFriendTab}>
+                    <AddFriendTab
+                        inComingRequests={inComingRequests}
+                        setOutGoingRequests={setOutGoingRequests}
+                        setInComingRequests={setInComingRequests}
+                        setFriends={setFriends} />
+                </FriendPanel>
             </Box>
         )
     );

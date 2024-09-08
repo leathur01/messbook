@@ -1,7 +1,7 @@
 import {  Grid, Paper } from "@mui/material";
 import SideProfile from "./SideProfile";
 
-const ChatBox = ({ children, value, index }) => {
+const ChatBox = ({ children, value, index, friend }) => {
     return (
         value === index && (
             <Grid container spacing={0}>
@@ -17,7 +17,7 @@ const ChatBox = ({ children, value, index }) => {
                 </Grid>
 
                 <Grid item xs={3}>
-                    <SideProfile/>
+                    <SideProfile friend={friend}/>
                 </Grid>
             </Grid >
         )

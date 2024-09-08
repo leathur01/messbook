@@ -136,7 +136,7 @@ export default function ProfileSettingButton({ handleOpen, user }) {
                             }}>
                             Cancle
                         </Button>
-                        <LoadingButton isLogOut={true}/>
+                        <LoadingButton isLogOut={true} />
                     </Stack>
                 </Box>
             </Dialog>

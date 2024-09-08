@@ -22,9 +22,6 @@ VALUES ('d3053795-6a72-431a-8df0-9192ebfab582', 'phuongminh', 'pminh@gmail.com',
 
 -- FRIEND TABLE
 insert into user_relationship (sender_id, receiver_id, status)
-values ('744dfb8f-197c-4969-96ee-2f48ee66e765', 'd3053795-6a72-431a-8df0-9192ebfab582', 'ACCEPTED');
-
-insert into user_relationship (sender_id, receiver_id, status)
 values ('d8878e64-3ff7-4266-bfb2-0c3537332e93', 'da2c8f06-c6a5-4fe9-8917-3dbd3f93dff5', 'PENDING');
 
 insert into user_relationship (sender_id, receiver_id, status)

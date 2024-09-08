@@ -1,7 +1,7 @@
 import { Paper, Grid, } from "@mui/material";
 import FriendPanelCallOut from "./FriendPanelCallOut";
 
-const FriendPanel = ({ children, value, index, setFriendValue }) => {
+const FriendPanel = ({ children, value, index, setFriendTab }) => {
     return (
         value === index && (
             <Grid container sx={{ flex: '1' }}>
@@ -17,7 +17,7 @@ const FriendPanel = ({ children, value, index, setFriendValue }) => {
                 </Grid>
 
                 <Grid item xs={3}>
-                    <FriendPanelCallOut setFriendValue={setFriendValue}/>
+                    <FriendPanelCallOut setFriendTab={setFriendTab}/>
                 </Grid>
             </Grid >
         )
