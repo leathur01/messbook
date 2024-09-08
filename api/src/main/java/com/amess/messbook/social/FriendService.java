@@ -6,6 +6,7 @@ import com.amess.messbook.social.dto.FriendRequestData;
 import com.amess.messbook.social.entity.RelationshipId;
 import com.amess.messbook.social.entity.User;
 import com.amess.messbook.social.entity.UserRelationship;
+import org.springframework.http.HttpMethod;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -22,7 +23,7 @@ public class FriendService {
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
 
-    void addFriend(User sender, FriendRequestData friendRequest) throws NoResourceFoundException {
+    void addFriend(User sender, FriendRequestData friendRequest) {
         if (sender.getNickname().equals(friendRequest.getNickname())) {
             var errorDetails = new ErrorDetails();
             errorDetails.addError("nickname", "Hm, didn't work. Double check that the username is correct.");
@@ -45,14 +46,11 @@ public class FriendService {
 
             if (isRequestAlreadySentBy(receiver, existedRelationship) && existedRelationship.getStatus().equals("PENDING")) {
                 acceptRequest(existedRelationship);
-                return;
-
             } else if (existedRelationship.getStatus().equals("ACCEPTED")) {
                 var errorDetails = new ErrorDetails();
                 errorDetails.addError("nickname", "You're already friends with that user");
                 throw new InvalidException(errorDetails);
             }
-
             // If the request has been sent before, then return
             return;
         }
@@ -88,7 +86,7 @@ public class FriendService {
         var optionalUserRelationship = userRelationshipRepository.findById(new RelationshipId(senderId, receiver.getId()));
 
         if (optionalUserRelationship.isEmpty()) {
-            throw new NoResourceFoundException(null, null);
+            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
         }
         var userRelationship = optionalUserRelationship.get();
 
