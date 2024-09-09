@@ -45,24 +45,6 @@ public class UserController {
             throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
         }
 
-        var user = optionalUser.get();
-        List<Device> devicesOfUser = deviceRepository.findByUserId(userId);
-        for (Device device : devicesOfUser) {
-            Message message = Message.builder()
-                    .putData("title", "A new friend request")
-                    .putData("body", user.getNickname())
-                    .setToken(device.getDeviceToken())
-                    .build();
-
-            String sentMessage = "";
-            try {
-                sentMessage= firebaseMessaging.send(message);
-            } catch (FirebaseMessagingException e) {
-                deviceRepository.deleteById(device.getId());
-            }
-            System.out.println("Successfully sent message: " + sentMessage);
-        }
-
         var userDTO = modelMapper.map(optionalUser.get(), UserDTO.class);
         return userDTO;
     }

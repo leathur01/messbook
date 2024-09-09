@@ -2,12 +2,15 @@ package com.amess.messbook.social;
 
 import com.amess.messbook.aop.exceptionhHandler.exception.ErrorDetails;
 import com.amess.messbook.aop.exceptionhHandler.exception.InvalidException;
+
+import com.amess.messbook.notification.DeviceRepository;
+import com.amess.messbook.notification.NotificationService;
 import com.amess.messbook.social.dto.FriendRequestData;
 import com.amess.messbook.social.entity.RelationshipId;
 import com.amess.messbook.social.entity.User;
 import com.amess.messbook.social.entity.UserRelationship;
-import org.springframework.http.HttpMethod;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -22,6 +25,7 @@ public class FriendService {
 
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     void addFriend(User sender, FriendRequestData friendRequest) {
         if (sender.getNickname().equals(friendRequest.getNickname())) {
@@ -65,8 +69,13 @@ public class FriendService {
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
         userRelationshipRepository.save(userRelationship);
+        notificationService.sendMultipleDevicesNotification(
+                receiver,
+                "A new friend request",
+                "From " + sender.getNickname(),
+                "SEND_FRIEND_REQUEST"
+        );
     }
 
     private boolean isRequestAlreadySentBy(User user, UserRelationship existedRelationship) {

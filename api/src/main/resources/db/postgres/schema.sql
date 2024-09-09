@@ -50,6 +50,6 @@ CREATE TABLE device (
 	user_id uuid,
 	token_issued_at timestamp(0) NOT NULL,
 	PRIMARY KEY (id),
-	FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE
+	FOREIGN KEY (user_id) REFERENCES "user" ON DELETE CASCADE
 );
 

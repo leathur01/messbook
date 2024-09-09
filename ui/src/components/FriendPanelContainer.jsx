@@ -1,4 +1,4 @@
-import { Typography, Box } from "@mui/material";
+import { Typography, Box, Badge } from "@mui/material";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import FriendPanel from "./FriendPanel";
@@ -8,6 +8,7 @@ import FriendRequestTab from "./FriendRequestTab";
 import { useAuth } from "../provider/AuthProvider";
 import axios from "axios";
 import AllFriendsTab from "./AllFriendsTab";
+import { Navigate } from "react-router-dom";
 
 const friendTabLabels = ['Online',]
 
@@ -16,12 +17,13 @@ export default function FriendPanelContainer({
     index,
     setFriends,
     friends,
-    setChatTab
+    setChatTab,
+    inComingRequests, setInComingRequests,
+    outGoingRequests, setOutGoingRequests
 }) {
     const [friendTab, setFriendTab] = React.useState(0)
     const { token } = useAuth()
-    const [inComingRequests, setInComingRequests] = useState([])
-    const [outGoingRequests, setOutGoingRequests] = useState([])
+    const [serverError, setServerError] = useState(false)
 
     const handleChange = (event, newValue) => {
         setFriendTab(newValue)
@@ -41,12 +43,14 @@ export default function FriendPanelContainer({
                 )
                 setOutGoingRequests(response.data)
             } catch (error) {
-                console.log(error)
+                setServerError(true)
             }
         }
 
         fetchRequests()
     }, [])
+
+    if (serverError) return <Navigate to='/500' replace={true} />
 
     return (
         value === index && (
@@ -87,11 +91,13 @@ export default function FriendPanelContainer({
                     />
                     <Tab
                         label={
-                            <Typography sx={{
-                                textTransform: 'none',
-                            }}>
-                                Pending
-                            </Typography>
+                            <Badge badgeContent={inComingRequests.length} color="error">                                                        
+                                <Typography sx={{
+                                    textTransform: 'none',
+                                }}>
+                                    Pending
+                                </Typography>
+                            </Badge>
                         }
                     />
                     <Tab
