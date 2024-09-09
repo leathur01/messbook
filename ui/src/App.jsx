@@ -2,7 +2,7 @@ import Routes from './routes/Routes';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import AuthProvider from './provider/AuthProvider.jsx';
 import React, { useState } from 'react';
-import { Alert, Avatar, Box, CssBaseline, IconButton, Snackbar, Stack, Typography } from '@mui/material';
+import { Avatar, Box, CssBaseline, IconButton, Snackbar, Stack, Typography } from '@mui/material';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { onMessage } from 'firebase/messaging';
@@ -95,7 +95,7 @@ const Notification = ({ open, handleClose, data }) => {
 								whiteSpace: 'nowrap',
 								textOverflow: 'ellipsis',
 							}}>
-							{data.body} wanna say hi
+							from {data.body}
 						</Typography>
 					</Stack>
 					<IconButton
