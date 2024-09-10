@@ -127,13 +127,11 @@ export default function HomePage() {
                     const response = await axios.post(
                         'http://localhost:8080/users/devices',
                         { deviceToken: deviceToken, userId: decoded.sub },
-                        {
-                            headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
-                        }
+                        { headers: { 'Authorization': `Bearer ${token}` } }
                     )
                     console.log(response.data)
+                    // Save the device token to send a delete request when logging out
+                    localStorage.setItem('deviceToken', deviceToken)
                 } catch (error) {
                     setIsError(true)
                 }
@@ -269,7 +267,7 @@ export default function HomePage() {
                         <LoadingButton isLogOut={true} />
                     </Stack>
                 </Box>
-            </Dialog>        
+            </Dialog>
         </Fragment >
     )
 }
