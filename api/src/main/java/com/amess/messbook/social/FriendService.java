@@ -2,8 +2,6 @@ package com.amess.messbook.social;
 
 import com.amess.messbook.aop.exceptionhHandler.exception.ErrorDetails;
 import com.amess.messbook.aop.exceptionhHandler.exception.InvalidException;
-
-import com.amess.messbook.notification.DeviceRepository;
 import com.amess.messbook.notification.NotificationService;
 import com.amess.messbook.social.dto.FriendRequestData;
 import com.amess.messbook.social.entity.RelationshipId;
@@ -26,6 +24,7 @@ public class FriendService {
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final UserService userService;
 
     void addFriend(User sender, FriendRequestData friendRequest) {
         if (sender.getNickname().equals(friendRequest.getNickname())) {
@@ -72,7 +71,7 @@ public class FriendService {
         userRelationshipRepository.save(userRelationship);
         notificationService.sendMultipleDevicesNotification(
                 receiver,
-                "A new friend request",
+                "New friend request",
                 "From " + sender.getNickname(),
                 "SEND_FRIEND_REQUEST"
         );
@@ -100,6 +99,18 @@ public class FriendService {
         var userRelationship = optionalUserRelationship.get();
 
         acceptRequest(userRelationship);
+        // Does not need to check the validity of the senderId since it has been validated by the above code
+        // But check anyway for safety net
+        var optionalUser = userService.findById(senderId);
+        if (optionalUser.isEmpty()) {
+            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
+        }
+        notificationService.sendMultipleDevicesNotification(
+                optionalUser.get(),
+                "Friend request accepted",
+                receiver.getNickname() + " accepted your friend request",
+                "ACCEPT_FRIEND_REQUEST"
+        );
     }
 
     private void acceptRequest(UserRelationship userRelationship) {

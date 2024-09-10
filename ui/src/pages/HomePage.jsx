@@ -1,5 +1,5 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { Stack, Tabs, Tab, Typography, Box, styled, Avatar, Dialog, Alert, Snackbar, IconButton } from "@mui/material";
+import { Stack, Tabs, Tab, Typography, Box, styled, Avatar, Dialog, Alert } from "@mui/material";
 import ConnectWithoutContactOutlinedIcon from '@mui/icons-material/ConnectWithoutContactOutlined';
 import StyledBadge from "../components/StyledBadge";
 import UserProfile from "./UserProfile";
@@ -15,7 +15,8 @@ import LoadingButton from "../components/LoadingButton";
 import NotificationStatus from "../components/NotificationStatus";
 import { getToken, onMessage } from "firebase/messaging";
 import { messaging } from "../notifications/firebase";
-import { ClearIcon } from '@mui/x-date-pickers';
+import { toast } from "react-toastify";
+import NotificationToast from "../components/NotificationToast";
 
 const { VITE_APP_VAPID_KEY } = import.meta.env;
 
@@ -29,26 +30,17 @@ export default function HomePage() {
     const [isTokenValid, setIsTokenValid] = useState(true)
     const [notificationStatus, setNotificationStatus] = useState(Notification.permission)
     const [friends, setFriends] = useState([])
-    const [newNotif, setNewNotif] = useState(false)
-    const [notificationData, setNotificationData] = useState({ title: '', body: '' })
     const [inComingRequests, setInComingRequests] = useState([])
     const [outGoingRequests, setOutGoingRequests] = useState([])
 
-    const handleCloseNotification = (event, reason) => {
-        if (reason === 'clickaway') {
-            return
-        }
-
-        setNewNotif(false);
-    }
-
     onMessage(messaging, (payload) => {
-        setNewNotif(true)
-        const notification = payload.data
-        setNotificationData({ title: notification.title, body: notification.body })
+        const notification = payload?.data
+        if (notification) {
+            toast(<NotificationToast title={notification.title} body={notification.body} />, { position: "bottom-right" })
+        }
         console.log('Message received. ', payload);
 
-        const fetchIncomingFriendRequests = async () => {
+        const fetchInComingRequests = async () => {
             try {
                 let response = await axios.get(
                     'http://localhost:8080/users/self/friends/requests?direction=incoming',
@@ -60,8 +52,28 @@ export default function HomePage() {
             }
         }
 
+        const fetchOutGoingRequests = async () => {
+            try {
+                let response = await axios.get(
+                    'http://localhost:8080/users/self/friends/requests?direction=outgoing',
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                setOutGoingRequests(response.data)
+
+                response = await axios.get(
+                    `http://localhost:8080/users/self/friends`,
+                    { headers: { 'Authorization': `Bearer ${token}` } }
+                )
+                setFriends(response.data)
+            } catch (error) {
+                setIsError(true)
+            }
+        }
+
         if (notification.type === 'SEND_FRIEND_REQUEST') {
-            fetchIncomingFriendRequests()
+            fetchInComingRequests()
+        } else if (notification.type === 'ACCEPT_FRIEND_REQUEST') {
+            fetchOutGoingRequests()
         }
     });
 
@@ -153,7 +165,6 @@ export default function HomePage() {
                             orientation="vertical"
                             value={chatTab}
                             onChange={(event, newValue) => {
-                                console.log(newValue)
                                 setChatTab(newValue)
                             }}
                         >
@@ -259,67 +270,16 @@ export default function HomePage() {
                     </Stack>
                 </Box>
             </Dialog>
-
-            <NotificationToast open={newNotif} data={notificationData} handleClose={handleCloseNotification} />
+            <button onClick={notify}>Show snackbar</button>
         </Fragment >
     )
 }
 
-const NotificationToast = ({ open, handleClose, data }) => {
-    return (
-        <Snackbar
-            open={open}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            autoHideDuration={8000}
-            sx={{
-                backgroundColor: 'white',
-                boxShadow: 'rgba(100, 100, 111, 0.2) 0px 7px 29px 0px',
-                padding: '22px 20px 22px 20px',
-                borderLeft: '8px solid #674188',
-                maxWidth: '400px'
-            }}>
-            {/* Passing the Stack directly to the snackbar results in a materialUI bug, so we wrap it with the Box component*/}
-            <Box>
-                <Stack gap={3} alignItems='center' direction='row'>
-                    <Avatar
-                        src='/src/assets/avatar/doggo.jpg'
-                        sx={{ width: 60, height: 60 }}
-                    >
-                    </Avatar>
-                    <Stack gap={0}>
-                        <Typography sx={{
-                            fontSize: '20px', fontWeight: '500',
-                            width: '200px',
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            textOverflow: 'ellipsis',
-                        }}>
-                            {data.title}
-                        </Typography>
-                        <Typography
-                            sx={{
-                                width: '200px',
-                                overflow: 'hidden',
-                                whiteSpace: 'nowrap',
-                                textOverflow: 'ellipsis',
-                            }}>
-                            {data.body}
-                        </Typography>
-                    </Stack>
-                    <IconButton
-                        onClick={handleClose}
-                        sx={{
-                            width: 40, height: 40,
-                        }}>
-                        <ClearIcon color='primary' />
-                    </IconButton>
-                </Stack>
-            </Box>
-        </Snackbar >
+const notify = () => {
+    toast(<NotificationToast title='new friend request' body='from thanh dung' />,
+        { position: "bottom-right" }
     )
 }
-
 
 const StyledTab = styled(Tab)(() => ({
     width: '270px',
