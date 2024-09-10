@@ -269,15 +269,8 @@ export default function HomePage() {
                         <LoadingButton isLogOut={true} />
                     </Stack>
                 </Box>
-            </Dialog>
-            <button onClick={notify}>Show snackbar</button>
+            </Dialog>        
         </Fragment >
-    )
-}
-
-const notify = () => {
-    toast(<NotificationToast title='new friend request' body='from thanh dung' />,
-        { position: "bottom-right" }
     )
 }
 

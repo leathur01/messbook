@@ -31,7 +31,6 @@ const NotificationToast = ({ title, body, closeToast }) => {
                                 width: '250px',
                                 textWrap: 'wrap',
                                 color: 'black'
-
                             }}>
                             {body}
                         </Typography>
