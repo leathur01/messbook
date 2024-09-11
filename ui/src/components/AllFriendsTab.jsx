@@ -127,7 +127,7 @@ const AllFriendsTab = ({ friends, setChatTab, setFriends }) => {
                     setSelectedFriend({})
                 }, 0.1 * 1000)
             }}>
-                <ProfileCard friend={selectedFriend} />
+                <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend} />
             </Dialog>
 
             <Dialog open={isDeleted}

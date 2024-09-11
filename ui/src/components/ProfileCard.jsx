@@ -2,9 +2,11 @@ import { Avatar, Box, Button, Card, CardMedia, Grid, Stack, Typography } from "@
 import StyledBadge from "./StyledBadge";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import React from "react";
+import React, { Fragment, useEffect, useState } from "react";
+import axios from "axios";
+import { useAuth } from "../provider/AuthProvider";
 
-const ProfileCard = ({ friend }) => {
+const ProfileCard = ({ friend, setSelectedFriend }) => {
     const [profileTab, setProfileTab] = React.useState(0);
 
     const handleChange = (event, newValue) => {
@@ -62,7 +64,8 @@ const ProfileCard = ({ friend }) => {
                     height: '300px',
                     margin: '0 2px',
                     borderRadius: '8px',
-                    boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px'
+                    boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px',
+                    overflow: 'auto'
                 }}>
                     <Tabs value={profileTab} onChange={handleChange} sx={{ marginBottom: '20px' }}>
                         <Tab label={
@@ -86,7 +89,7 @@ const ProfileCard = ({ friend }) => {
                         <AboutMe friend={friend} />
                     </ProfileTab>
                     <ProfileTab value={profileTab} index={1}>
-                        <MutualFriend />
+                        <MutualFriend friend={friend} setSelectedFriend={setSelectedFriend} setProfileTab={setProfileTab} />
                     </ProfileTab>
                 </Box>
             </Box>
@@ -94,50 +97,80 @@ const ProfileCard = ({ friend }) => {
     )
 }
 
-const MutualFriend = () => {
-    return (
-        <Button
-            variant="contained"
-            sx={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'flex-start'
-            }}>
-            <Stack direction='row' alignItems='center' gap={1}>
-                <StyledBadge dot={true}>
-                    <Avatar src='/src/assets/avatar/doggo.jpg'
-                        sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
-                    />
-                </StyledBadge>
+const MutualFriend = ({ friend, setSelectedFriend, setProfileTab }) => {
+    const [mutualFriends, setMutualFriends] = useState([])
+    const { token } = useAuth()
 
-                <Typography sx={{
-                    fontWeight: '400',
-                    textTransform: 'none',
-                    overflow: 'hidden',
-                    whiteSpace: 'nowrap',
-                    textOverflow: 'ellipsis',
-                }}>
-                    buidoicholon
-                </Typography>
-            </Stack>
-        </Button>
+    useEffect(() => {
+        const fetchMutualFriends = async () => {
+            const response = await axios.get(
+                `http://localhost:8080/users/self/friends/${friend.id}/mutual`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            )
+
+            setMutualFriends(response.data)
+        }
+
+        fetchMutualFriends()
+    }, [])
+
+    return (
+        <Fragment>
+            {mutualFriends.map((mutual, index) => {
+                return (
+                    <Button
+                        onClick={() => {
+                            setSelectedFriend(mutual)
+                            setProfileTab(0)
+                        }}
+                        key={index}
+                        variant="contained"
+                        sx={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'flex-start',
+                            marginBottom: '10px'
+                        }}>
+                        <Stack direction='row' alignItems='center' gap={1}>
+                            <StyledBadge dot={true}>
+                                <Avatar src='/src/assets/avatar/doggo.jpg'
+                                    sx={{ width: 40, height: 40, border: 'solid ', borderColor: 'primary.main' }}
+                                />
+                            </StyledBadge>
+
+                            <Typography sx={{
+                                fontWeight: '400',
+                                textTransform: 'none',
+                                overflow: 'hidden',
+                                whiteSpace: 'nowrap',
+                                textOverflow: 'ellipsis',
+                            }}>
+                                {mutual.nickname}
+                            </Typography>
+                        </Stack>
+                    </Button>
+                )
+            })}
+        </Fragment >
     )
 }
 
 const AboutMe = ({ friend }) => {
-    return (
-        <Grid container spacing={3}>
-            <Grid item xs={12}>
-                <Box>
-                    <Typography variant='subtitle2' sx={{ fontWeight: '400' }}>
-                        About Me
-                    </Typography>
+    const options = { year: 'numeric', month: 'short', day: 'numeric' }
+    const createdAt = new Date(friend.createdAt)
+    const memberSince = createdAt.toLocaleDateString('en-us', options)
 
-                    <Typography variant="subtitle11" sx={{ fontWeight: '300' }}>
-                        {friend.bio}
-                    </Typography>
-                </Box>
-            </Grid>
+    return (
+        <Grid container spacing={2}>
+            {friend?.bio && (
+                <Grid item xs={12}>
+                    <Box>
+                        <Typography variant="subtitle11" sx={{ fontWeight: '300' }}>
+                            {friend.bio}
+                        </Typography>
+                    </Box>
+                </Grid>
+            )}
             <Grid item xs={12}>
                 <Box>
                     <Typography variant='subtitle2' sx={{ fontWeight: '400' }}>
@@ -145,7 +178,7 @@ const AboutMe = ({ friend }) => {
                     </Typography>
 
                     <Typography variant="subtitle11" sx={{ fontWeight: '300' }}>
-                        Aug 21, 2023
+                        {memberSince}
                     </Typography>
                 </Box>
             </Grid>

@@ -2,6 +2,10 @@ import { Avatar, Box, Card, CardMedia, Grid, Typography } from "@mui/material";
 import StyledBadge from "./StyledBadge";
 
 export default function SideProfile({ friend }) {
+    const options = { year: 'numeric', month: 'short', day: 'numeric' }
+    const createdAt = new Date(friend.createdAt)
+    const memberSince = createdAt.toLocaleDateString('en-us', options)
+
     return (
         <Card sx={{
             height: '100vh',
@@ -72,7 +76,7 @@ export default function SideProfile({ friend }) {
                                 </Typography>
 
                                 <Typography variant="subtitle11" sx={{ fontWeight: '300' }}>
-                                    Aug 21, 2023
+                                    {memberSince}
                                 </Typography>
                             </Box>
                         </Grid>

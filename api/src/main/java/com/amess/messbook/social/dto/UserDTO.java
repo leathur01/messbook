@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -22,4 +23,6 @@ public class UserDTO {
     private String phoneNumber;
 
     private LocalDate dateOfBirth;
+
+    private LocalDateTime createdAt;
 }
