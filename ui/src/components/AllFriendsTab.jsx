@@ -6,12 +6,14 @@ import { useState } from "react";
 import FetchingButton from "./FetchingButton";
 import { useAuth } from "../provider/AuthProvider";
 import axios from "axios";
+import ProfileCard from "./ProfileCard";
 
 const AllFriendsTab = ({ friends, setChatTab, setFriends }) => {
     const [isDeleted, setIsDeleted] = useState(false)
     const [selectedFriend, setSelectedFriend] = useState({})
     const { token } = useAuth()
     const [isLoading, setIsLoading] = useState(false)
+    const [viewProfile, setViewProfile] = useState(false)
     const total = friends.length
 
     const handleRemove = async () => {
@@ -43,46 +45,65 @@ const AllFriendsTab = ({ friends, setChatTab, setFriends }) => {
             </Typography>
             {friends.map((friend, index) => {
                 return (
-                    <Stack direction='row' alignItems='center' justifyContent='space-between'
+                    <Stack direction='row' alignItems='center' gap={1} justifyContent='space-between'
                         key={index}
                         sx={{
-                            borderTop: '1px solid #674188',
-                            padding: '10px 0'
+                            padding: '5px 0',
                         }}>
-                        <Stack direction='row' gap={2}>
-                            <StyledBadge dot={true}>
-                                <Avatar src='/src/assets/avatar/doggo.jpg'
-                                    sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'success.light' }}
-                                />
-                            </StyledBadge>
-                            <Stack>
-                                <Typography sx={{
-                                    fontWeight: '500',
-                                    width: '200px',
-                                    overflow: 'hidden',
-                                    whiteSpace: 'nowrap',
-                                    textOverflow: 'ellipsis',
-                                }}>
-                                    {friend.nickname}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        width: '200px',
+                        <Button
+                            onClick={() => {
+                                setSelectedFriend(friend)
+                                setViewProfile(true)
+                            }}
+                            variant='contained'
+                            sx={{
+                                textTransform: 'none',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'flex-start',
+                            }}>
+                            <Stack direction='row' gap={1}>
+                                <StyledBadge dot={true}>
+                                    <Avatar src='/src/assets/avatar/doggo.jpg'
+                                        sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main'}}
+                                    />
+                                </StyledBadge>
+
+                                <Stack justifyContent='center' sx={{ textAlign: 'left' }}>                                
+                                    <Typography sx={{
+                                        fontWeight: '400',
                                         overflow: 'hidden',
                                         whiteSpace: 'nowrap',
                                         textOverflow: 'ellipsis',
                                     }}>
-                                    Offline/Online
-                                </Typography>
+                                        {friend.nickname}
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: '12px',
+                                            overflow: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                        }}>
+                                        Offline/Online
+                                    </Typography>
+                                </Stack>
                             </Stack>
-                        </Stack>
-                        <Stack direction='row'>
+                        </Button>
+
+                        <Stack direction='row' alignItems='center'
+                            sx={{
+                                height: '64px',
+                                borderRadius: '5px',
+                                backgroundColor: '#F5F7F8',
+                                padding: '0px 10px'
+                            }}>
                             <IconButton
                                 onClick={() => { setChatTab(friend.id) }}
                                 sx={{
                                     width: 40, height: 40,
                                 }}>
-                                <ChatIcon color='primary' />
+                                <ChatIcon sx={{ color: 'primary.main' }} />
                             </IconButton>
                             <IconButton
                                 onClick={() => {
@@ -95,10 +116,19 @@ const AllFriendsTab = ({ friends, setChatTab, setFriends }) => {
                                 <PersonRemoveIcon color='error' />
                             </IconButton>
                         </Stack>
-
                     </Stack>
                 )
             })}
+
+            <Dialog open={viewProfile} onClose={() => {
+                setViewProfile(false)
+                // Prevent some data disapeare before the dialog is closed => increase UX
+                setTimeout(() => {
+                    setSelectedFriend({})
+                }, 0.1 * 1000)
+            }}>
+                <ProfileCard friend={selectedFriend} />
+            </Dialog>
 
             <Dialog open={isDeleted}
                 onClose={() => {
@@ -150,7 +180,7 @@ const AllFriendsTab = ({ friends, setChatTab, setFriends }) => {
                     </Stack>
                 </Box>
             </Dialog>
-        </Box>
+        </Box >
     )
 }
 

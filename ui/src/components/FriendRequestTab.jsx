@@ -1,15 +1,18 @@
-import { Avatar, Box, IconButton, Stack, Typography } from "@mui/material"
+import { Avatar, Box, Button, Dialog, IconButton, Stack, Typography } from "@mui/material"
 import { ClearIcon } from '@mui/x-date-pickers';
 import CheckIcon from '@mui/icons-material/Check';
 import axios from "axios";
 import { useAuth } from "../provider/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { useState } from "react";
+import ProfileCard from "./ProfileCard";
 
 const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setInComingRequests, setOutGoingRequests }) => {
     const { token } = useAuth()
     const [serverError, setServerError] = useState(false)
     const total = inComingRequests.length + outGoingRequests.length
+    const [selectedFriend, setSelectedFriend] = useState({})
+    const [viewProfile, setViewProfile] = useState(false)
 
     const handleAccept = async (senderId) => {
         try {
@@ -25,7 +28,7 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
             response = await axios.get(
                 'http://localhost:8080/users/self/friends/requests?direction=incoming',
                 { headers: { 'Authorization': `Bearer ${token}` } }
-            )            
+            )
             setInComingRequests(response.data)
         } catch (error) {
             console.log(error)
@@ -75,104 +78,153 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
             </Typography>
             {inComingRequests.map((inComingRequest, index) => {
                 return (
-                    <Stack direction='row' alignItems='center' justifyContent='space-between'
+                    <Stack direction='row' alignItems='center' gap={1} justifyContent='space-between'
                         key={index}
                         sx={{
-                            borderTop: '1px solid #674188',
-                            padding: '10px 0'
+                            padding: '5px 0'
                         }}>
-                        <Stack direction='row' gap={2}>
-                            <Avatar src='/src/assets/avatar/doggo.jpg'
-                                sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
-                            />
-                            <Stack>
-                                <Typography sx={{
-                                    fontWeight: '500',
-                                    width: '200px',
-                                    overflow: 'hidden',
-                                    whiteSpace: 'nowrap',
-                                    textOverflow: 'ellipsis',
-                                }}>
-                                    {inComingRequest.nickname}
-                                </Typography>
-                                <Typography
-                                    sx={{
-                                        width: '200px',
+                        <Button
+                            onClick={() => {
+                                setSelectedFriend(inComingRequest)
+                                setViewProfile(true)
+                            }}
+                            variant='contained'
+                            sx={{
+                                textTransform: 'none',
+                                width: '100%',
+                                display: 'flex',
+                                justifyContent: 'flex-start',
+                            }}>
+                            <Stack direction='row' gap={1}>
+                                <Avatar src='/src/assets/avatar/doggo.jpg'
+                                    sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
+                                />
+                                <Stack justifyContent='center' sx={{ textAlign: 'left' }}>
+                                    <Typography sx={{
+                                        fontWeight: '400',
                                         overflow: 'hidden',
                                         whiteSpace: 'nowrap',
                                         textOverflow: 'ellipsis',
                                     }}>
-                                    Incoming Friend request
-                                </Typography>
+                                        {inComingRequest.nickname}
+                                    </Typography>
+                                    <Typography
+                                        sx={{
+                                            fontSize: '12px',
+                                            overflow: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                        }}>
+                                        Incoming Friend request
+                                    </Typography>
+                                </Stack>
                             </Stack>
-                        </Stack>
-                        <Stack direction='row'>
+                        </Button>
+                        <Stack direction='row' alignItems='center' justifyContent='flex-end'
+                            sx={{
+                                height: '64px',
+                                borderRadius: '5px',
+                                padding: '0px 10px',
+                                width: 'auto',
+                                backgroundColor: '#F5F7F8'
+                            }}>
                             <IconButton
                                 onClick={() => { handleAccept(inComingRequest.id) }}
                                 sx={{
                                     width: 40, height: 40,
                                 }}>
-                                <CheckIcon color='primary' />
+                                <CheckIcon color='success' />
                             </IconButton>
                             <IconButton
                                 onClick={() => { handleDeny(inComingRequest.id) }}
                                 sx={{
                                     width: 40, height: 40,
                                 }}>
-                                <ClearIcon color='primary' />
+                                <ClearIcon color='error' />
                             </IconButton>
                         </Stack>
-                    </Stack>
+                    </Stack >
                 )
             })}
 
 
-            {outGoingRequests.map((outGoingRequest, index) => {
-                return (
-                    <Stack direction='row' alignItems='center' justifyContent='space-between'
-                        key={index}
-                        sx={{
-                            borderTop: '1px solid #674188',
-                            padding: '10px 0'
-                        }}>
-                        <Stack direction='row' gap={2}>
-                            <Avatar src='/src/assets/avatar/doggo.jpg'
-                                sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
-                            />
-                            <Stack>
-                                <Typography sx={{
-                                    fontWeight: '500',
-                                    width: '200px',
-                                    overflow: 'hidden',
-                                    whiteSpace: 'nowrap',
-                                    textOverflow: 'ellipsis',
+            {
+                outGoingRequests.map((outGoingRequest, index) => {
+                    return (
+                        <Stack direction='row' alignItems='center' gap={1} justifyContent='space-between'
+                            key={index}
+                            sx={{
+                                padding: '5px 0'
+                            }}>
+                            <Button
+                                onClick={() => {
+                                    setSelectedFriend(outGoingRequest)
+                                    setViewProfile(true)
+                                }}
+                                variant='contained'
+                                sx={{
+                                    textTransform: 'none',
+                                    width: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'flex-start',
                                 }}>
-                                    {outGoingRequest.nickname}
-                                </Typography>
-                                <Typography
+                                <Stack direction='row' gap={1}>
+                                    <Avatar src='/src/assets/avatar/doggo.jpg'
+                                        sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
+                                    />
+                                    <Stack justifyContent='center' sx={{ textAlign: 'left' }}>
+                                        <Typography sx={{
+                                            fontWeight: '400',
+                                            overflow: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                        }}>
+                                            {outGoingRequest.nickname}
+                                        </Typography>
+                                        <Typography
+                                            sx={{
+                                                fontSize: '12px',
+                                                overflow: 'hidden',
+                                                whiteSpace: 'nowrap',
+                                                textOverflow: 'ellipsis',
+                                            }}>
+                                            Outgoing Friend Request
+                                        </Typography>
+                                    </Stack>
+                                </Stack>
+                            </Button>
+
+                            <Stack direction='row' alignItems='center' justifyContent='flex-end'
+                                sx={{
+                                    height: '64px',
+                                    borderRadius: '5px',
+                                    padding: '0px 10px',
+                                    width: 'auto',
+                                    backgroundColor: '#F5F7F8'
+                                }}>
+                                <IconButton
+                                    onClick={() => { handleCancel(outGoingRequest.id) }}
                                     sx={{
-                                        width: '200px',
-                                        overflow: 'hidden',
-                                        whiteSpace: 'nowrap',
-                                        textOverflow: 'ellipsis',
+                                        width: 40, height: 40,
                                     }}>
-                                    Outgoing Friend Request
-                                </Typography>
+                                    <ClearIcon color='error' />
+                                </IconButton>
                             </Stack>
                         </Stack>
-                        <Stack direction='row'>
-                            <IconButton
-                                onClick={() => { handleCancel(outGoingRequest.id) }}
-                                sx={{
-                                    width: 40, height: 40,
-                                }}>
-                                <ClearIcon color='primary' />
-                            </IconButton>
-                        </Stack>
-                    </Stack>
-                )
-            })}
-        </Box>
+                    )
+                })
+            }
+
+            <Dialog open={viewProfile} onClose={() => {
+                setViewProfile(false)
+                // Prevent some data disapeare before the dialog is closed => increase UX
+                setTimeout(() => {
+                    setSelectedFriend({})
+                }, 0.1 * 1000)
+            }}>
+                <ProfileCard friend={selectedFriend} />
+            </Dialog>
+        </Box >
     )
 }
 
