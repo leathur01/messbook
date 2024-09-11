@@ -74,14 +74,14 @@ public class NotificationService {
                 .map(Device::getDeviceToken)
                 .collect(Collectors.toList());
 
-        MulticastMessage message = MulticastMessage.builder()
-                .putData("title", title)
-                .putData("body", body)
-                .putData("type", type)
-                .addAllTokens(registrationTokens)
-                .build();
-
         try {
+            MulticastMessage message = MulticastMessage.builder()
+                    .putData("title", title)
+                    .putData("body", body)
+                    .putData("type", type)
+                    .addAllTokens(registrationTokens)
+                    .build();
+
             BatchResponse batchResponse = firebaseMessaging.sendEachForMulticast(message);
             if (batchResponse.getFailureCount() > 0) {
                 List<SendResponse> responses = batchResponse.getResponses();
@@ -91,9 +91,9 @@ public class NotificationService {
                     }
                 }
             }
-        } catch (FirebaseMessagingException e) {
-            // If messages can't be sent for some reason, we can ignore it
-            throw new CannotSendMessagesException(e);
+        } catch (FirebaseMessagingException | IllegalArgumentException e) {
+            // User won't be able to receive the notification in this case
+            // It can be ignored
         }
     }
 }
