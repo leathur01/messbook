@@ -217,6 +217,7 @@ export default function HomePage() {
 
 
                     <FriendPanelContainer
+                        user={user}
                         value={chatTab}
                         index={0}
                         setFriends={setFriends}

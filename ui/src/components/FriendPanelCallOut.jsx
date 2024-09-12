@@ -20,12 +20,10 @@ const FriendPanelCallOut = ({ setFriendTab }) => {
                 }} />
             <Typography variant='body' component='h1' sx={
                 {
-                    fontWeight: '300',
+                    fontWeight: '400',
                     textAlign: 'center',
                     marginBottom: '15px'
                 }}>
-                You look lonely
-                <br />
                 Go add more friends!
             </Typography>
             <Box sx={{ marginBottom: '10px' }}>
@@ -33,7 +31,7 @@ const FriendPanelCallOut = ({ setFriendTab }) => {
                     color='success'
                     variant='contained'
                     size='small'
-                    onClick={() => { setFriendTab(3) }}
+                    onClick={() => { setFriendTab(2) }}
                 >
                     Add Friend
                 </Button>
