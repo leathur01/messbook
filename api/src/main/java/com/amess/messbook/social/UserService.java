@@ -6,18 +6,31 @@ import com.amess.messbook.auth.TokenService;
 import com.amess.messbook.auth.entity.Token;
 import com.amess.messbook.auth.entity.TokenScope;
 import com.amess.messbook.social.entity.User;
+import com.amess.messbook.social.exception.StorageException;
+import com.amess.messbook.social.exception.StorageFileNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.channels.MulticastChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 @RequiredArgsConstructor
 @Service
@@ -142,5 +155,48 @@ public class UserService {
         return user;
     }
 
+    void updateAvatar(UUID userId, MultipartFile image) throws NoResourceFoundException {
+        // This also check if the request is empty
+        // Quick check for simple file upload attacks
+        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png");
+        if (!allowedTypes.contains(image.getContentType()) || image.getOriginalFilename() == null) {
+            var errorDetails = new ErrorDetails();
+            errorDetails.addError("image", "Invalid image type");
+            throw new InvalidException(errorDetails);
+        }
 
+        // The originalFileName cannot be null at this point
+        // Check for double extension
+        if (image.getOriginalFilename().split("\\.").length > 3) {
+            var errorDetails = new ErrorDetails();
+            errorDetails.addError("image", "Invalid image type");
+            throw new InvalidException(errorDetails);
+        }
+
+        // Filename Sanitization: Use random filename instead of the user-provided one
+        String randomFilename = UUID.randomUUID() + "." + image.getOriginalFilename().split("\\.")[1];
+        try {
+            Path uploadPath = Paths.get("user-images/" + userId.toString());
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
+            }
+
+            Path destinationFile = uploadPath.resolve(Paths.get(randomFilename));
+            try (InputStream inputStream = image.getInputStream()) {
+                Files.copy(inputStream, destinationFile,
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            throw new StorageException("Failed to update your avatar. Please try again");
+        }
+
+        var optionalUser = findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
+        }
+
+        var user = optionalUser.get();
+        user.setAvatarFilePath(randomFilename);
+        userRepository.save(user);
+    }
 }

@@ -1,21 +1,27 @@
 package com.amess.messbook.social;
 
-import com.amess.messbook.notification.Device;
-import com.amess.messbook.notification.DeviceRepository;
 import com.amess.messbook.social.dto.*;
 import com.amess.messbook.social.entity.User;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
+import com.amess.messbook.social.exception.StorageFileNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -24,8 +30,6 @@ public class UserController {
     private final ModelMapper modelMapper;
     private final UserService userService;
     private final UserRepository userRepository;
-    private final FirebaseMessaging firebaseMessaging;
-    private final DeviceRepository deviceRepository;
 
     @GetMapping("/")
     public String hello() {
@@ -45,8 +49,33 @@ public class UserController {
             throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
         }
 
-        var userDTO = modelMapper.map(optionalUser.get(), UserDTO.class);
-        return userDTO;
+        return modelMapper.map(optionalUser.get(), UserDTO.class);
+    }
+
+    @GetMapping(
+            value = "users/{userId}/avatar",
+            produces = MediaType.IMAGE_JPEG_VALUE
+    )
+    public ResponseEntity<Resource> getUserAvatar(@PathVariable UUID userId) throws NoResourceFoundException {
+        // TODO: Extract this logic in to the userService and storageService
+        Map<String, MediaType> responseContentType = new HashMap<>();
+        responseContentType.put("jpg", MediaType.valueOf(MediaType.IMAGE_JPEG_VALUE));
+        responseContentType.put("png", MediaType.valueOf(MediaType.IMAGE_PNG_VALUE));
+        var optionalUser = userRepository.findById(userId);
+        if (optionalUser.isEmpty()) {
+            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
+        }
+
+        String filename = optionalUser.get().getAvatarFilePath();
+        Path file = Paths.get("user-images/" + userId).resolve(filename);
+        Resource resource = new FileSystemResource(file);
+        if (resource.exists() || resource.isReadable()) {
+            return ResponseEntity.ok()
+                    .contentType(responseContentType.get(filename.split("\\.")[1]))
+                    .body(resource);
+        } else {
+            throw new StorageFileNotFoundException("Could not read file: " + filename);
+        }
     }
 
     @ResponseStatus(HttpStatus.OK)
@@ -100,6 +129,18 @@ public class UserController {
         userService.resetPassword(request.getToken(), request.getPassword());
         var response = new HashMap<String, String>();
         response.put("message", "your password has been successfully reset");
+
+        return response;
+    }
+
+    @PutMapping("users/{userId}/avatar")
+    public HashMap<String, String> updateAvatar(
+            @PathVariable UUID userId,
+            @RequestParam("image") MultipartFile image
+    ) throws NoResourceFoundException {
+        userService.updateAvatar(userId, image);
+        var response = new HashMap<String, String>();
+        response.put("message", "You avatar has been updated");
 
         return response;
     }

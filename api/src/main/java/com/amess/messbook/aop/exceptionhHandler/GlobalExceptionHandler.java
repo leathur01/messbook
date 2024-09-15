@@ -3,6 +3,8 @@ package com.amess.messbook.aop.exceptionhHandler;
 import com.amess.messbook.aop.exceptionhHandler.exception.ErrorDetails;
 import com.amess.messbook.aop.exceptionhHandler.exception.InvalidAuthenticationTokenException;
 import com.amess.messbook.aop.exceptionhHandler.exception.InvalidException;
+import com.amess.messbook.social.exception.StorageException;
+import com.amess.messbook.social.exception.StorageFileNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,14 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    @ExceptionHandler(StorageException.class)
+    public ErrorDetails handleStorageException(StorageException ex) {
+        logger.error(ex.getMessage(), ex);
+        var errorDetails = new ErrorDetails();
+        errorDetails.addError("image", ex.getMessage());
+        return errorDetails;
+    }
+
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ExceptionHandler({SignatureException.class, InvalidAuthenticationTokenException.class})
     public ErrorDetails handleInvalidAuthenticationToken() {
@@ -46,8 +56,7 @@ public class GlobalExceptionHandler {
 
         });
 
-        var errorDetails = new ErrorDetails(errorFields);
-        return errorDetails;
+        return new ErrorDetails(errorFields);
     }
 
     // Return consistent errors for the two exceptions to avoid user enumeration attacks
@@ -74,7 +83,7 @@ public class GlobalExceptionHandler {
     }
 
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    @ExceptionHandler({MethodArgumentTypeMismatchException.class, HttpRequestMethodNotSupportedException.class, NoResourceFoundException.class})
+    @ExceptionHandler({StorageFileNotFoundException.class, MethodArgumentTypeMismatchException.class, HttpRequestMethodNotSupportedException.class, NoResourceFoundException.class})
     public ErrorDetails handleNoResourceFoundException() {
         var errorDetails = new ErrorDetails();
         errorDetails.addError("error", "resource not found");
