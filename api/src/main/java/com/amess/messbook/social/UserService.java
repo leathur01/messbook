@@ -6,6 +6,7 @@ import com.amess.messbook.auth.TokenService;
 import com.amess.messbook.auth.entity.Token;
 import com.amess.messbook.auth.entity.TokenScope;
 import com.amess.messbook.social.entity.User;
+import com.amess.messbook.social.exception.StorageFileNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.core.io.Resource;
@@ -147,7 +148,7 @@ public class UserService {
         return user;
     }
 
-    void updateAvatar(UUID userId, MultipartFile image) throws NoResourceFoundException, InvalidException {
+    User updateAvatar(UUID userId, MultipartFile image) throws NoResourceFoundException, InvalidException {
         Path uploadPath = Paths.get("user-images/" + userId.toString());
         String storedFilename = storageService.storeImage(uploadPath, image);
 
@@ -158,7 +159,7 @@ public class UserService {
 
         var user = optionalUser.get();
         user.setAvatarFilePath(storedFilename);
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 
     Resource getAvatar(UUID userId) throws NoResourceFoundException {
@@ -168,7 +169,12 @@ public class UserService {
         }
 
         String filename = optionalUser.get().getAvatarFilePath();
-        Path file = Paths.get("user-images/" + userId).resolve(filename);
-        return storageService.getImage(file);
+        try {
+            Path file = Paths.get("user-images/" + userId).resolve(filename);
+            return storageService.getImage(file);
+        } catch (StorageFileNotFoundException e) {
+            Path file = Paths.get("user-images/" + "default-avatar.png");
+            return storageService.getImage(file);
+        }
     }
 }

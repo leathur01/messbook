@@ -87,8 +87,15 @@ export default function HomePage() {
                     `http://localhost:8080/users/${decoded.sub}`,
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
-                setUser(response.data)
-                setIsActivated(response.data.activated)
+                const user = response.data
+
+                response = await axios.get(
+                    `http://localhost:8080/users/${decoded.sub}/avatar`,
+                    { headers: { 'Authorization': `Bearer ${token}` }, responseType: 'blob' },
+                )
+                const url = URL.createObjectURL(response.data)
+                setUser({ ...user, imageUrl: url })
+                setIsActivated(user.activated)
 
                 response = await axios.get(
                     `http://localhost:8080/users/self/friends`,
@@ -96,10 +103,11 @@ export default function HomePage() {
                 )
                 setFriends(response.data)
             } catch (error) {
-                const tokenError = error.response.data.errors.token
+                const tokenError = error.response?.data.errors.token
                 if (tokenError) {
                     setIsTokenValid(false)
                 } else {
+                    console.log(error)
                     setIsError(true)
                 }
             }
@@ -149,7 +157,6 @@ export default function HomePage() {
     const handleCloseUserProfile = () => {
         setOpen(false)
     }
-
 
     if (isError) return <Navigate to='/500' replace={true} />
     if (isLoading) return <Loading />
@@ -214,7 +221,6 @@ export default function HomePage() {
                             <ProfileSettingButton handleOpen={handleOpen} user={user} />
                         </Stack>
                     </Stack>
-
 
                     <FriendPanelContainer
                         user={user}

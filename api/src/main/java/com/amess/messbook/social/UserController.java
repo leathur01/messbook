@@ -117,14 +117,12 @@ public class UserController {
     }
 
     @PutMapping("users/{userId}/avatar")
-    public HashMap<String, String> updateAvatar(
+    public UserDTO updateAvatar(
             @PathVariable UUID userId,
             @RequestParam("image") MultipartFile image
     ) throws NoResourceFoundException {
-        userService.updateAvatar(userId, image);
-        var response = new HashMap<String, String>();
-        response.put("message", "You avatar has been updated");
-        return response;
+        User user =  userService.updateAvatar(userId, image);
+        return modelMapper.map(user, UserDTO.class);
     }
 
     @ResponseStatus(HttpStatus.OK)

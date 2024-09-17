@@ -52,7 +52,7 @@ export default function ProfileSettingButton({ handleOpen, user }) {
                     >
                         <StyledBadge dot={true}>
                             <Avatar
-                                src='/src/assets/avatar/doggo.jpg'
+                                src={user.imageUrl}
                                 sx={{ width: 40, height: 40 }}
                             >
                             </Avatar>

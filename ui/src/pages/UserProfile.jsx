@@ -10,6 +10,7 @@ import axios from "axios";
 import NicknameForm from "../components/NicknameForm";
 import PasswordForm from "../components/PasswordForm";
 import AccountRemovalForm from "../components/AccountRemovelForm";
+import EditIcon from '@mui/icons-material/Edit';
 
 const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError, setUser }) => {
     const { token } = useAuth()
@@ -62,6 +63,29 @@ const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError,
         }
     }
 
+    const handleAvatarChange = async (files) => {
+        const file = files[0];
+        const formData = new FormData()
+        formData.append('image', file)
+        const decoded = jwtDecode(token);
+        let response = await axios.put(
+            `http://localhost:8080/users/${decoded.sub}/avatar`, formData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            }
+        )
+        const user = response.data
+        response = await axios.get(
+            `http://localhost:8080/users/${decoded.sub}/avatar`,
+            { headers: { 'Authorization': `Bearer ${token}` }, responseType: 'blob' },
+        )
+        const url = URL.createObjectURL(response.data)
+        setUser({ ...user, imageUrl: url })
+    }
+
     return (
         <Dialog open={open} component='main' sx={{
             backgroundColor: 'primary.main',
@@ -93,15 +117,48 @@ const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError,
                     <Box>
                         <StyledBadge dot={false}>
                             <Avatar
-                                alt="Remy Sharp"
-                                src="/src/assets/avatar/doggo.jpg"
                                 sx={{
                                     width: 100,
                                     height: 100,
                                     border: 'solid ',
-                                    borderColor: 'primary.main'
-                                }}
-                            >
+                                    borderColor: 'primary.main',
+                                }}>
+                                <Avatar
+                                    src={user.imageUrl}
+                                    sx={{
+                                        width: 100,
+                                        height: 100,
+                                        objectFit: 'cover'
+                                    }}
+                                >
+                                </Avatar>
+
+                                <input
+                                    accept='image/jpeg, image/png'
+                                    type="file"
+                                    id="imgUpLoad"
+                                    style={{ display: 'none' }}
+                                    onChange={() => { handleAvatarChange(event.target.files) }}
+                                />
+                                <Avatar
+                                    onClick={() => {
+                                        const input = document.querySelector("#imgUpLoad");
+                                        input.click();
+                                    }}
+                                    sx={{
+                                        width: 100,
+                                        height: 100,
+                                        opacity: '0',
+                                        backgroundColor: 'black',
+                                        position: 'absolute',
+                                        transition: '.3s ease',
+                                        '&:hover': {
+                                            opacity: '0.7',
+                                            cursor: 'pointer'
+                                        }
+                                    }}>
+                                    <EditIcon />
+                                </Avatar>
                             </Avatar>
                         </StyledBadge >
 
