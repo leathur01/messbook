@@ -2,11 +2,9 @@ package com.amess.messbook.social;
 
 import com.amess.messbook.social.dto.*;
 import com.amess.messbook.social.entity.User;
-import com.amess.messbook.social.exception.StorageFileNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -16,8 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -30,6 +26,7 @@ public class UserController {
     private final ModelMapper modelMapper;
     private final UserService userService;
     private final UserRepository userRepository;
+    private final StorageService storageService;
 
     @GetMapping("/")
     public String hello() {
@@ -56,26 +53,14 @@ public class UserController {
             value = "users/{userId}/avatar",
             produces = MediaType.IMAGE_JPEG_VALUE
     )
-    public ResponseEntity<Resource> getUserAvatar(@PathVariable UUID userId) throws NoResourceFoundException {
-        // TODO: Extract this logic in to the userService and storageService
-        Map<String, MediaType> responseContentType = new HashMap<>();
-        responseContentType.put("jpg", MediaType.valueOf(MediaType.IMAGE_JPEG_VALUE));
-        responseContentType.put("png", MediaType.valueOf(MediaType.IMAGE_PNG_VALUE));
-        var optionalUser = userRepository.findById(userId);
-        if (optionalUser.isEmpty()) {
-            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
-        }
-
-        String filename = optionalUser.get().getAvatarFilePath();
-        Path file = Paths.get("user-images/" + userId).resolve(filename);
-        Resource resource = new FileSystemResource(file);
-        if (resource.exists() || resource.isReadable()) {
-            return ResponseEntity.ok()
-                    .contentType(responseContentType.get(filename.split("\\.")[1]))
-                    .body(resource);
-        } else {
-            throw new StorageFileNotFoundException("Could not read file: " + filename);
-        }
+    public ResponseEntity<?> getUserAvatar(@PathVariable UUID userId) throws NoResourceFoundException {
+        Resource resource = userService.getAvatar(userId);
+        String filename = resource.getFilename();
+        // filename cannot be null at this point
+        String imageType = filename.split("\\.")[1];
+        return ResponseEntity.ok()
+                .contentType(storageService.imageTypeToMediaType(imageType))
+                .body(resource);
     }
 
     @ResponseStatus(HttpStatus.OK)
@@ -118,7 +103,6 @@ public class UserController {
         );
         var response = new HashMap<String, String>();
         response.put("message", "your password has been successfully changed");
-
         return response;
     }
 
@@ -129,7 +113,6 @@ public class UserController {
         userService.resetPassword(request.getToken(), request.getPassword());
         var response = new HashMap<String, String>();
         response.put("message", "your password has been successfully reset");
-
         return response;
     }
 
@@ -141,7 +124,6 @@ public class UserController {
         userService.updateAvatar(userId, image);
         var response = new HashMap<String, String>();
         response.put("message", "You avatar has been updated");
-
         return response;
     }
 
@@ -154,7 +136,6 @@ public class UserController {
         userService.deleteUser(userId, request.getPassword());
         var response = new HashMap<String, String>();
         response.put("message", "You account has beenn deleted. You will not be able to use this account again");
-
         return response;
     }
 }
