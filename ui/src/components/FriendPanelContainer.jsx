@@ -21,7 +21,8 @@ export default function FriendPanelContainer({
     friends,
     setChatTab,
     inComingRequests, setInComingRequests,
-    outGoingRequests, setOutGoingRequests
+    outGoingRequests, setOutGoingRequests,
+    handleOpenUserProfile
 }) {
     const [friendTab, setFriendTab] = React.useState(0)
     const { token } = useAuth()
@@ -110,7 +111,7 @@ export default function FriendPanelContainer({
                 </Grid>
 
                 <Grid item xs={3}>
-                    <SideProfile friend={user} />
+                    <SideProfile friend={user} handleOpenProfile={handleOpenUserProfile}/>
                 </Grid>
             </Grid>
 

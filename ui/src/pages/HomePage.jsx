@@ -233,6 +233,7 @@ export default function HomePage() {
                         setInComingRequests={setInComingRequests}
                         outGoingRequests={outGoingRequests}
                         setOutGoingRequests={setOutGoingRequests}
+                        handleOpenUserProfile={() => { setOpen(true) }}
                     />
 
                     {/* Index + 1 is used to skip through the first friend tab */}

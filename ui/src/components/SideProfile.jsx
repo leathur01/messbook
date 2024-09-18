@@ -1,7 +1,7 @@
 import { Avatar, Box, Card, CardMedia, Grid, Typography } from "@mui/material";
 import StyledBadge from "./StyledBadge";
 
-export default function SideProfile({ friend }) {
+export default function SideProfile({ friend, handleOpenProfile }) {
     const options = { year: 'numeric', month: 'short', day: 'numeric' }
     const createdAt = new Date(friend.createdAt)
     const memberSince = createdAt.toLocaleDateString('en-us', options)
@@ -24,8 +24,10 @@ export default function SideProfile({ friend }) {
                 image='/src/assets/avatar/doggo.jpg'
             />
             <StyledBadge dot={false}>
-
                 <Avatar
+                    onClick={() => {                        
+                        handleOpenProfile()
+                    }}
                     alt="Remy Sharp"
                     src="/src/assets/avatar/doggo.jpg"
                     sx={{
@@ -34,18 +36,34 @@ export default function SideProfile({ friend }) {
                         marginTop: '-40px',
                         marginLeft: '10px',
                         border: 'solid ',
-                        borderColor: 'primary.main'
+                        borderColor: 'primary.main',
+                        transition: '.3s ease',
+                        '&:hover': {
+                            border: 'solid 3px',
+                            borderColor: 'green',
+                            cursor: 'pointer',
+                            width: 95,
+                            height: 95,
+                        }
                     }}
                 >
                 </Avatar>
             </StyledBadge >
 
             <Box sx={{ margin: '5px 28px' }}>
-                <Typography sx={{
-                    fontWeight: '500',
-                    marginBottom: '5px',
-                    fontSize: '35px'
-                }}>
+                <Typography
+                    onClick={() => {
+                        handleOpenProfile()
+                    }}
+                    sx={{
+                        fontWeight: '500',
+                        marginBottom: '5px',
+                        fontSize: '35px',
+                        '&:hover': {
+                            opacity: '0.8',
+                            cursor: 'pointer'
+                        }
+                    }}>
                     {friend.nickname}
                 </Typography>
 

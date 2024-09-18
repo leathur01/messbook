@@ -222,7 +222,7 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
                     setSelectedFriend({})
                 }, 0.1 * 1000)
             }}>
-                <ProfileCard friend={selectedFriend} />
+                <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend}/>
             </Dialog>
         </Box >
     )
