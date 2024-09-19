@@ -1,7 +1,8 @@
 import { Avatar, Box, Card, CardMedia, Grid, Typography } from "@mui/material";
-import StyledBadge from "./StyledBadge";
+import { getUserAvatarUrl } from "../services/userClient";
+import { memo } from "react";
 
-export default function SideProfile({ friend, handleOpenProfile }) {
+const SideProfile = ({ friend, handleOpenProfile }) => {
     const options = { year: 'numeric', month: 'short', day: 'numeric' }
     const createdAt = new Date(friend.createdAt)
     const memberSince = createdAt.toLocaleDateString('en-us', options)
@@ -12,6 +13,7 @@ export default function SideProfile({ friend, handleOpenProfile }) {
             borderRadius: '0px'
         }}>
             <CardMedia
+                onClick={handleOpenProfile}
                 sx={{
                     height: 140,
                     border: 'solid',
@@ -19,37 +21,16 @@ export default function SideProfile({ friend, handleOpenProfile }) {
                     borderBottom: '1',
                     borderRight: '0',
                     borderLeft: '0',
-                    borderColor: 'primary.main'
+                    borderColor: 'primary.main',
+                    transition: '.3s ease',
+                    '&:hover': {
+                        height: 150,
+                        cursor: 'pointer',
+                    }
                 }}
-                image='/src/assets/avatar/doggo.jpg'
+                image={getUserAvatarUrl(friend.id)}
             />
-            <StyledBadge dot={false}>
-                <Avatar
-                    onClick={() => {                        
-                        handleOpenProfile()
-                    }}
-                    alt="Remy Sharp"
-                    src="/src/assets/avatar/doggo.jpg"
-                    sx={{
-                        width: 90,
-                        height: 90,
-                        marginTop: '-40px',
-                        marginLeft: '10px',
-                        border: 'solid ',
-                        borderColor: 'primary.main',
-                        transition: '.3s ease',
-                        '&:hover': {
-                            border: 'solid 3px',
-                            borderColor: 'green',
-                            cursor: 'pointer',
-                            width: 95,
-                            height: 95,
-                        }
-                    }}
-                >
-                </Avatar>
-            </StyledBadge >
-
+            <OptimizedUserAvatar userId={friend.id} handleOpenProfile={handleOpenProfile} />        
             <Box sx={{ margin: '5px 28px' }}>
                 <Typography
                     onClick={() => {
@@ -104,3 +85,31 @@ export default function SideProfile({ friend, handleOpenProfile }) {
         </Card>
     )
 }
+
+const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId, handleOpenProfile }) {
+    console.log('render')
+    return (
+        <Avatar
+            onClick={handleOpenProfile}
+            alt="Remy Sharp"
+            src={getUserAvatarUrl(userId)}
+            sx={{
+                width: 90,
+                height: 90,
+                marginTop: '-40px',
+                marginLeft: '10px',
+                border: 'solid ',
+                borderColor: 'primary.main',
+                transition: '.3s ease',
+                '&:hover': {
+                    cursor: 'pointer',
+                    width: 95,
+                    height: 95,
+                }
+            }}
+        >
+        </Avatar>
+    )
+})
+
+export default SideProfile

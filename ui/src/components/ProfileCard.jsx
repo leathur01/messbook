@@ -2,9 +2,31 @@ import { Avatar, Box, Button, Card, CardMedia, Grid, Stack, Typography } from "@
 import StyledBadge from "./StyledBadge";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import React, { Fragment, useEffect, useState } from "react";
+import React, { Fragment, memo, useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../provider/AuthProvider";
+import { getUserAvatarUrl } from "../services/userClient";
+
+const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId }) {
+    console.log('render')
+    return (
+        <StyledBadge dot={false}>
+            <Avatar
+                alt="Remy Sharp"
+                src={getUserAvatarUrl(userId)}
+                sx={{
+                    width: 90,
+                    height: 90,
+                    marginTop: '-40px',
+                    marginLeft: '10px',
+                    border: 'solid ',
+                    borderColor: 'primary.main'
+                }}
+            >
+            </Avatar>
+        </StyledBadge >
+    )
+})
 
 const ProfileCard = ({ friend, setSelectedFriend }) => {
     const [profileTab, setProfileTab] = React.useState(0);
@@ -32,22 +54,7 @@ const ProfileCard = ({ friend, setSelectedFriend }) => {
                     backgroundColor: '#2E073F'
                 }}
             />
-            <StyledBadge dot={false}>
-                <Avatar
-                    alt="Remy Sharp"
-                    src="/src/assets/avatar/doggo.jpg"
-                    sx={{
-                        width: 90,
-                        height: 90,
-                        marginTop: '-40px',
-                        marginLeft: '10px',
-                        border: 'solid ',
-                        borderColor: 'primary.main'
-                    }}
-                >
-                </Avatar>
-            </StyledBadge >
-
+            <OptimizedUserAvatar userId={friend.id} />
             <Box sx={{ margin: '5px 28px' }}>
                 <Typography sx={{
                     fontWeight: '400',
@@ -133,7 +140,7 @@ const MutualFriend = ({ friend, setSelectedFriend, setProfileTab }) => {
                         }}>
                         <Stack direction='row' alignItems='center' gap={1}>
                             <StyledBadge dot={true}>
-                                <Avatar src='/src/assets/avatar/doggo.jpg'
+                                <Avatar src={getUserAvatarUrl(mutual.id)}
                                     sx={{ width: 40, height: 40, border: 'solid ', borderColor: 'primary.main' }}
                                 />
                             </StyledBadge>

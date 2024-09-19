@@ -3,7 +3,7 @@ import WhiteWrapper from "../components/WhiteWrapper"
 import ProfileField from "../components/ProfileField";
 import StyledBadge from "../components/StyledBadge";
 import ClearIcon from '@mui/icons-material/Clear';
-import { useState } from "react";
+import { memo, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import { useAuth } from "../provider/AuthProvider";
 import axios from "axios";
@@ -11,6 +11,7 @@ import NicknameForm from "../components/NicknameForm";
 import PasswordForm from "../components/PasswordForm";
 import AccountRemovalForm from "../components/AccountRemovelForm";
 import EditIcon from '@mui/icons-material/Edit';
+import { getUserAvatarUrl } from "../services/userClient";
 
 const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError, setUser }) => {
     const { token } = useAuth()
@@ -123,16 +124,7 @@ const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError,
                                     border: 'solid ',
                                     borderColor: 'primary.main',
                                 }}>
-                                <Avatar
-                                    src={user.imageUrl}
-                                    sx={{
-                                        width: 100,
-                                        height: 100,
-                                        objectFit: 'cover'
-                                    }}
-                                >
-                                </Avatar>
-
+                                <OptimizedUserAvatar userId={user.id} />
                                 <input
                                     accept='image/jpeg, image/png'
                                     type="file"
@@ -282,5 +274,19 @@ const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError,
         </Dialog >
     )
 }
+
+const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId }) {
+    console.log('render')
+    return (
+        <Avatar
+            src={getUserAvatarUrl(userId)}
+            sx={{
+                width: 100,
+                height: 100,
+            }}
+        >
+        </Avatar>
+    )
+})
 
 export default UserProfile

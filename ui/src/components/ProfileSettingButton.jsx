@@ -1,12 +1,12 @@
-import { Stack, Typography, Avatar, Button, Menu, MenuItem, ListItemIcon, Box, Dialog } from "@mui/material"
-import StyledBadge from "./StyledBadge"
+import { Stack, Typography, Button, Menu, MenuItem, ListItemIcon, Box, Dialog } from "@mui/material"
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
-import React, { Fragment, useState } from "react"
+import React, { Fragment, memo, useState } from "react"
 import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoadingButton from "./LoadingButton";
+import AvatarImage from "./AvatarImage";
 
-export default function ProfileSettingButton({ handleOpen, user }) {
+const ProfileSettingButton = memo(function ProfileSettingButton({ handleOpen, user }) {
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [isLogOut, setIsLogOut] = useState(false)
     const open = Boolean(anchorEl)
@@ -50,14 +50,7 @@ export default function ProfileSettingButton({ handleOpen, user }) {
                         alignItems='center'
                         justifyContent='space-between'
                     >
-                        <StyledBadge dot={true}>
-                            <Avatar
-                                src={user.imageUrl}
-                                sx={{ width: 40, height: 40 }}
-                            >
-                            </Avatar>
-                        </StyledBadge>
-
+                        <AvatarImage userId={user.id} dot={true} />
                         <Typography sx={{
                             textTransform: 'none',
                             fontWeight: '500',
@@ -143,4 +136,6 @@ export default function ProfileSettingButton({ handleOpen, user }) {
         </Fragment >
 
     )
-}
+})
+
+export default ProfileSettingButton

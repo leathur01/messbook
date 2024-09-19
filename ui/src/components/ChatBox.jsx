@@ -1,16 +1,17 @@
 import { Dialog, Grid, Paper } from "@mui/material";
 import SideProfile from "./SideProfile";
 import ProfileCard from "./ProfileCard";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 const ChatBox = ({ children, value, index, friend }) => {
     const [viewProfile, setViewProfile] = useState(false)
     const [selectedFriend, setSelectedFriend] = useState(friend)
 
-    const handleOpenFriendProfile = () => {
+    // React pattern to pass a function to a component wrapped with memo 
+    const handleOpenFriendProfile = useCallback(() => {
         setSelectedFriend(friend)
         setViewProfile(true)
-    }
+    }, [friend])
 
     return (
         value === index && (
@@ -27,17 +28,17 @@ const ChatBox = ({ children, value, index, friend }) => {
                 </Grid>
 
                 <Grid item xs={3}>
-                    <SideProfile friend={friend} handleOpenProfile={handleOpenFriendProfile}/>
+                    <SideProfile friend={friend} handleOpenProfile={handleOpenFriendProfile} />
                 </Grid>
 
                 <Dialog open={viewProfile} onClose={() => {
                     setViewProfile(false)
-                    // Prevent some data disapeare before the dialog is closed => increase UX
-                    setTimeout(() => {
-                        setSelectedFriend({})
-                    }, 0.1 * 1000)
+                    setSelectedFriend({})
                 }}>
-                    <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend} />
+                    {/* Prevent some data disapeare before the dialog is closed => increase UX */}
+                    {viewProfile && (
+                        <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend} />
+                    )}
                 </Dialog>
             </Grid >
         )

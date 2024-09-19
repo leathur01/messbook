@@ -6,6 +6,7 @@ import { useAuth } from "../provider/AuthProvider";
 import { Navigate } from "react-router-dom";
 import { useState } from "react";
 import ProfileCard from "./ProfileCard";
+import { getUserAvatarUrl } from "../services/userClient";
 
 const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setInComingRequests, setOutGoingRequests }) => {
     const { token } = useAuth()
@@ -96,7 +97,7 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
                                 justifyContent: 'flex-start',
                             }}>
                             <Stack direction='row' gap={1}>
-                                <Avatar src='/src/assets/avatar/doggo.jpg'
+                                <Avatar src={getUserAvatarUrl(inComingRequest.id)}
                                     sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
                                 />
                                 <Stack justifyContent='center' sx={{ textAlign: 'left' }}>
@@ -169,7 +170,7 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
                                     justifyContent: 'flex-start',
                                 }}>
                                 <Stack direction='row' gap={1}>
-                                    <Avatar src='/src/assets/avatar/doggo.jpg'
+                                    <Avatar src={getUserAvatarUrl(outGoingRequest.id)}
                                         sx={{ width: 50, height: 50, border: 'solid ', borderColor: 'primary.main' }}
                                     />
                                     <Stack justifyContent='center' sx={{ textAlign: 'left' }}>
@@ -217,12 +218,11 @@ const FriendRequestTab = ({ inComingRequests, outGoingRequests, setFriends, setI
 
             <Dialog open={viewProfile} onClose={() => {
                 setViewProfile(false)
-                // Prevent some data disapeare before the dialog is closed => increase UX
-                setTimeout(() => {
-                    setSelectedFriend({})
-                }, 0.1 * 1000)
+                setSelectedFriend({})
             }}>
-                <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend}/>
+                {viewProfile && (
+                    <ProfileCard friend={selectedFriend} setSelectedFriend={setSelectedFriend} />
+                )}
             </Dialog>
         </Box >
     )

@@ -1,7 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
-import { Stack, Tabs, Tab, Typography, Box, styled, Avatar, Dialog, Alert } from "@mui/material";
+import { Stack, Tabs, Tab, Typography, Box, styled, Dialog, Alert } from "@mui/material";
 import ConnectWithoutContactOutlinedIcon from '@mui/icons-material/ConnectWithoutContactOutlined';
-import StyledBadge from "../components/StyledBadge";
 import UserProfile from "./UserProfile";
 import ChatBox from "../components/ChatBox";
 import ProfileSettingButton from "../components/ProfileSettingButton";
@@ -17,6 +16,7 @@ import { getToken, onMessage } from "firebase/messaging";
 import { messaging } from "../notifications/firebase";
 import { toast } from "react-toastify";
 import NotificationToast from "../components/NotificationToast";
+import AvatarImage from "../components/AvatarImage";
 
 const { VITE_APP_VAPID_KEY } = import.meta.env;
 
@@ -88,13 +88,7 @@ export default function HomePage() {
                     { headers: { 'Authorization': `Bearer ${token}` } }
                 )
                 const user = response.data
-
-                response = await axios.get(
-                    `http://localhost:8080/users/${decoded.sub}/avatar`,
-                    { headers: { 'Authorization': `Bearer ${token}` }, responseType: 'blob' },
-                )
-                const url = URL.createObjectURL(response.data)
-                setUser({ ...user, imageUrl: url })
+                setUser(user)
                 setIsActivated(user.activated)
 
                 response = await axios.get(
@@ -196,13 +190,7 @@ export default function HomePage() {
                                     key={index}
                                     label={
                                         <Stack direction='row' gap={1} alignItems='center'>
-                                            <StyledBadge dot={true}>
-                                                <Avatar
-                                                    src='/src/assets/avatar/doggo.jpg'
-                                                    sx={{ width: 35, height: 35 }}
-                                                >
-                                                </Avatar>
-                                            </StyledBadge>
+                                            <AvatarImage userId={friend.id} dot={true} />
                                             <Typography sx={{
                                                 textTransform: 'none',
                                             }}>
@@ -244,14 +232,16 @@ export default function HomePage() {
                     ))}
                 </Stack>
 
-                <UserProfile
-                    open={open}
-                    handleClose={handleCloseUserProfile}
-                    user={user}
-                    setUser={setUser}
-                    setIsLoading={setIsLoading}
-                    setIsError={setIsError}
-                />
+                {open && (
+                    <UserProfile
+                        open={open}
+                        handleClose={handleCloseUserProfile}
+                        user={user}
+                        setUser={setUser}
+                        setIsLoading={setIsLoading}
+                        setIsError={setIsError}
+                    />
+                )}
             </Box>
 
             <Dialog open={!isTokenValid}>

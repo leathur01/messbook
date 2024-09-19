@@ -30,25 +30,13 @@ const StyledBadge = ({ children, dot }) => {
         },
     }))
 
-    if (dot == true) {
-        return <StyledBadge
-            overlap="circular"
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            color="secondary"
-            badgeContent=" "
-            sx={{ margin: '0 auto' }}
-            variant='dot'
-        >
-            {children}
-        </StyledBadge>
-    }
-
     return <StyledBadge
         overlap="circular"
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         color="secondary"
         badgeContent=" "
         sx={{ margin: '0 auto' }}
+        variant={dot ? 'dot' : ''}
     >
         {children}
     </StyledBadge>
