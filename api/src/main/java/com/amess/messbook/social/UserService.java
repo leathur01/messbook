@@ -149,7 +149,7 @@ public class UserService {
     }
 
     User updateAvatar(UUID userId, MultipartFile image) throws NoResourceFoundException, InvalidException {
-        Path uploadPath = Paths.get("user-images/" + userId.toString());
+        Path uploadPath = Paths.get("user-images/non-static/" + userId.toString());
         String storedFilename = storageService.storeImage(uploadPath, image);
 
         var optionalUser = findById(userId);
@@ -170,7 +170,7 @@ public class UserService {
 
         String filename = optionalUser.get().getAvatarFilePath();
         try {
-            Path file = Paths.get("user-images/" + userId).resolve(filename);
+            Path file = Paths.get("user-images/non-static/" + userId).resolve(filename);
             return storageService.getImage(file);
         } catch (StorageFileNotFoundException e) {
             Path file = Paths.get("user-images/" + "default-avatar.png");
