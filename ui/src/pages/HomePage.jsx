@@ -190,7 +190,7 @@ export default function HomePage() {
                                     key={index}
                                     label={
                                         <Stack direction='row' gap={1} alignItems='center'>
-                                            <AvatarImage userId={friend.id} dot={true} />
+                                            <AvatarImage user={friend} dot={true} />
                                             <Typography sx={{
                                                 textTransform: 'none',
                                             }}>

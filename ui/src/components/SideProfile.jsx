@@ -12,24 +12,31 @@ const SideProfile = ({ friend, handleOpenProfile }) => {
             height: '100vh',
             borderRadius: '0px'
         }}>
-            <CardMedia
-                onClick={handleOpenProfile}
-                sx={{
-                    height: 140,
-                    border: 'solid',
-                    borderTop: '0',
-                    borderBottom: '1',
-                    borderRight: '0',
-                    borderLeft: '0',
-                    borderColor: 'primary.main',
-                    transition: '.3s ease',
-                    '&:hover': {
-                        height: 150,
-                        cursor: 'pointer',
-                    }
-                }}
-                image={getUserAvatarUrl(friend.id)}
-            />
+            <Box sx={{
+                height: '140px',
+                transition: '.3s ease',
+                '&:hover': {
+                    height: '150px',
+                    cursor: 'pointer',
+                }
+            }}>
+                <CardMedia component='img'
+                    onClick={handleOpenProfile}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        border: 'solid',
+                        borderTop: '0',
+                        borderBottom: '1',
+                        borderRight: '0',
+                        borderLeft: '0',
+                        borderColor: 'primary.main',
+                        transition: '.3s ease',                        
+                    }}
+                    src={getUserAvatarUrl(friend.id)}
+                />
+            </Box>
             <OptimizedUserAvatar userId={friend.id} handleOpenProfile={handleOpenProfile} />        
             <Box sx={{ margin: '5px 28px' }}>
                 <Typography
@@ -87,7 +94,6 @@ const SideProfile = ({ friend, handleOpenProfile }) => {
 }
 
 const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId, handleOpenProfile }) {
-    console.log('render')
     return (
         <Avatar
             onClick={handleOpenProfile}

@@ -276,7 +276,6 @@ const UserProfile = ({ open = true, handleClose, user, setIsLoading, setIsError,
 }
 
 const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId }) {
-    console.log('render')
     return (
         <Avatar
             src={getUserAvatarUrl(userId)}

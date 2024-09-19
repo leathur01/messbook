@@ -4,11 +4,10 @@ import StyledBadge from "./StyledBadge";
 import { getUserAvatarUrl } from "../services/userClient";
 
 // Use memo to prevent fetching imgae multiple time unecessarily
-const AvatarImage = React.memo(function AvatarImage({ userId, dot }) {
-    console.log('render')
+const AvatarImage = React.memo(function AvatarImage({ user, dot }) {
     return (
         <StyledBadge dot={dot}>
-            <Avatar src={getUserAvatarUrl(userId)} />
+            <Avatar src={getUserAvatarUrl(user.id)} />
         </StyledBadge >
     )
 });

@@ -1,12 +1,12 @@
 import { Stack, Typography, Button, Menu, MenuItem, ListItemIcon, Box, Dialog } from "@mui/material"
 import ManageAccountsIcon from '@mui/icons-material/ManageAccounts'
-import React, { Fragment, memo, useState } from "react"
+import React, { Fragment, useState } from "react"
 import EditIcon from '@mui/icons-material/Edit';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoadingButton from "./LoadingButton";
 import AvatarImage from "./AvatarImage";
 
-const ProfileSettingButton = memo(function ProfileSettingButton({ handleOpen, user }) {
+const ProfileSettingButton = ({ handleOpen, user }) => {
     const [anchorEl, setAnchorEl] = React.useState(null)
     const [isLogOut, setIsLogOut] = useState(false)
     const open = Boolean(anchorEl)
@@ -50,7 +50,7 @@ const ProfileSettingButton = memo(function ProfileSettingButton({ handleOpen, us
                         alignItems='center'
                         justifyContent='space-between'
                     >
-                        <AvatarImage userId={user.id} dot={true} />
+                        <AvatarImage user={user} dot={true} />
                         <Typography sx={{
                             textTransform: 'none',
                             fontWeight: '500',
@@ -136,6 +136,6 @@ const ProfileSettingButton = memo(function ProfileSettingButton({ handleOpen, us
         </Fragment >
 
     )
-})
+}
 
 export default ProfileSettingButton

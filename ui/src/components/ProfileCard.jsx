@@ -8,7 +8,6 @@ import { useAuth } from "../provider/AuthProvider";
 import { getUserAvatarUrl } from "../services/userClient";
 
 const OptimizedUserAvatar = memo(function OptimizedUserAvatar({ userId }) {
-    console.log('render')
     return (
         <StyledBadge dot={false}>
             <Avatar
