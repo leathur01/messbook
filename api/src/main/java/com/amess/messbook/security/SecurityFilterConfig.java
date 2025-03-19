@@ -33,7 +33,8 @@ public class SecurityFilterConfig {
                                 "/password-reset",
                                 "/log-in",
                                 "users/reset-password",
-                                "users/*/avatar"
+                                "users/*/avatar",
+                                "ws"
                         )
                         .permitAll()
                         .anyRequest()
