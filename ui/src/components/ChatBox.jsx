@@ -1,10 +1,19 @@
-import { Box, Dialog, Grid, Paper, Stack, TextField } from "@mui/material";
+import {
+  Box,
+  CircularProgress,
+  Dialog,
+  Grid,
+  Paper,
+  Stack,
+  TextField,
+} from "@mui/material";
 import SideProfile from "./SideProfile";
 import ProfileCard from "./ProfileCard";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useAuth } from "../provider/AuthProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInView } from "react-intersection-observer";
 
 const initialChat = [];
 const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
@@ -14,13 +23,16 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
   const [chatHistory, setChatHistory] = useState(initialChat);
   const viewport = useRef(null);
   const { token } = useAuth();
-
-  const messagesQuery = useQuery({
+  const scrollableRef = useRef(null);
+  const [scrollHeight, setScrollHeight] = useState(0);
+  const { ref, inView } = useInView();
+  const messagesQuery = useInfiniteQuery({
     queryKey: ["messages", value, index],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       if (value === index) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
         let response = await axios.get(
-          `http://localhost:8080/messages/${friend.nickname}`,
+          `http://localhost:8080/messages/${friend.nickname}?page=${pageParam}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -28,20 +40,42 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
       }
       return [];
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      return lastPage.number < lastPage.totalPages - 1
+        ? lastPage.number + 1
+        : undefined;
+    },
     refetchOnWindowFocus: false,
   });
 
-  // Set chat messages if the query is success
-  // Use this approache because the onSucess is removed from reactquery
+  // Avoid the scrollbar to scroll to the top when older messages are added to the top of the message history
   useEffect(() => {
-    if (messagesQuery.isSuccess && messagesQuery.data.length !== 0) {
-      setChatHistory(messagesQuery.data);
-      console.log(messagesQuery.data);
-    }
-  }, [messagesQuery.data]);
+    const scrollableElement = scrollableRef.current;
+    if (scrollableElement && scrollHeight != scrollableElement.scrollHeight) {
+      const diff = scrollableElement.scrollHeight - scrollHeight;
 
+      if (diff) {
+        setTimeout(() => {
+          scrollableElement.scrollTo({
+            top: diff,
+          });
+        }, 0);
+      }
+
+      setScrollHeight(scrollableElement.scrollHeight);
+    }
+  }, [scrollableRef, scrollHeight]);
+
+  // Fetch older messages when user scroll to the top
   useEffect(() => {
-    // Render messages receiver from the message broker
+    if (inView && messagesQuery.hasNextPage) {
+      messagesQuery.fetchNextPage();
+    }
+  }, [messagesQuery, inView]);
+
+  // Render messages receiver from the message broker
+  useEffect(() => {
     if (
       newMessage.senderNickname === friend.nickname ||
       newMessage.receiverNickname === friend.nickname
@@ -51,22 +85,26 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
         senderNickname: newMessage.senderNickname,
         content: newMessage.content,
       };
-      setChatHistory([...chatHistory, newChatMessage]);
+      setChatHistory([newChatMessage, ...chatHistory]);
     }
   }, [newMessage]);
 
+  // Reset the local chat history when open a new chat box which lead to fetching chat history from the server
+  // This prevent the server data from conflicting with the local data
+  useEffect(() => {
+    if (value === index) {
+      setChatHistory([]);
+    }
+  }, [value, index]);
+
+  // Scroll to the bottom when new users send a new messages while they are viewing older messages
   useEffect(() => {
     scrollToBottom();
   }, [chatHistory]);
 
   const scrollToBottom = () => {
-    viewport.current?.scrollIntoView({ behavior: "smooth" });
+    viewport.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
-
-  // Scroll to the bottom when open chatbox
-  const scrollRef = React.useCallback((node) => {
-    node?.scrollIntoView({ behavior: "instant", block: "start" });
-  }, []);
 
   // React pattern to pass a function to a component wrapped with memo
   const handleOpenFriendProfile = useCallback(() => {
@@ -74,9 +112,9 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
     setViewProfile(true);
   }, [friend]);
 
+  // Send message when user press enter
+  // Shift + Enter is used for line breaks
   const handleKeyDown = (event) => {
-    // Send message when user press enter
-    // Shift + Enter is used for line breaks
     if (!event.shiftKey && event.key === "Enter") {
       event.preventDefault();
       if (message !== "" && stompClient && user) {
@@ -95,7 +133,7 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
           senderNickname: user.nickname,
           content: message,
         };
-        setChatHistory([...chatHistory, newChatMessage]);
+        setChatHistory([newChatMessage, ...chatHistory]);
       }
     }
   };
@@ -109,6 +147,7 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
             sx={{
               p: 3,
               paddingRight: 0,
+              paddingTop: 0,
               borderRadius: "0px",
               height: "100vh",
               boxShadow: "rgba(149, 157, 165, 0.2) 0px 8px 24px",
@@ -122,12 +161,17 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
               }}
             >
               <Stack
+                direction="column-reverse"
+                ref={scrollableRef}
                 spacing={3}
                 sx={{
+                  flexGrow: 1,
                   overflow: "auto",
                   padding: "0px 10px 10px 0px",
                 }}
               >
+                <Box sx={{ marginTop: "0px" }} ref={viewport}></Box>
+
                 {chatHistory.map((message, index) => {
                   if (message.senderNickname === user.nickname) {
                     return (
@@ -160,8 +204,57 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
                   }
                 })}
 
-                <Box sx={{ height: "0.1px" }} ref={viewport}></Box>
-                <span ref={scrollRef} />
+                {messagesQuery?.data?.pages.map((page, index) => {
+                  return (
+                    <React.Fragment key={index}>
+                      {page.content.map((message, index) => {
+                        if (message.senderNickname === user.nickname) {
+                          return (
+                            <Box
+                              sx={{
+                                alignSelf: "flex-end",
+                                borderRadius: "16px",
+                                bgcolor: "#F3F3F3",
+                                padding: "10px 20px",
+                              }}
+                              key={index}
+                            >
+                              {message.id + message.content}
+                            </Box>
+                          );
+                        } else {
+                          return (
+                            <Box
+                              sx={{
+                                alignSelf: "flex-start",
+                                borderRadius: "16px",
+                                bgcolor: "#F3F3F3",
+                                padding: "10px 20px",
+                              }}
+                              key={index}
+                            >
+                              {message.id + message.content}
+                            </Box>
+                          );
+                        }
+                      })}
+                    </React.Fragment>
+                  );
+                })}
+
+                <Box ref={ref}>
+                  {messagesQuery.isFetchingNextPage && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                      }}
+                    >
+                      <CircularProgress size={30} />
+                    </Box>
+                  )}
+                </Box>
               </Stack>
 
               <TextField
