@@ -32,6 +32,9 @@ public class NotificationConfig {
             throw new RuntimeException(e);
         }
 
-        return FirebaseMessaging.getInstance(FirebaseApp.initializeApp(options));
+        if(FirebaseApp.getApps().isEmpty()) {
+            return FirebaseMessaging.getInstance(FirebaseApp.initializeApp(options));
+        }
+        return FirebaseMessaging.getInstance();
     }
 }
