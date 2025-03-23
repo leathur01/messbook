@@ -4,16 +4,19 @@ import com.amess.messbook.chat.entity.Chat;
 import com.amess.messbook.chat.entity.Message;
 import com.amess.messbook.social.entity.User;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -23,6 +26,7 @@ public class ChatController {
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final MessageRepository messageRepository;
     private final ChatRepository chatRepository;
+    private final int PAGE_SIZE = 15;
 
     @MessageMapping("/message")
     public Message sendMessage(@Payload Message chatMessage) {
@@ -46,14 +50,14 @@ public class ChatController {
     }
 
     @GetMapping("messages/{receiverNickname}")
-    public List<Message> getChatMessages(@AuthenticationPrincipal User user, @PathVariable String receiverNickname) {
+    public Page<Message> getChatMessages(@AuthenticationPrincipal User user, @PathVariable String receiverNickname, @RequestParam(defaultValue = "5") int page) {
         Optional<Chat> optionalChat = chatRepository.findBySenderNicknameAndReceiverNickname(user.getNickname(), receiverNickname);
         if (optionalChat.isEmpty()) {
-            return List.of();
+            return Page.empty();
         }
 
         Chat chatRoom = optionalChat.get();
-        List<Message> messages = messageRepository.findByChatIdOrderByIdAsc(chatRoom.getId());
-        return messages;
+        Pageable pageable = PageRequest.of(page, PAGE_SIZE);
+        return messageRepository.findByChatIdOrderByIdDesc(chatRoom.getId(), pageable);
     }
 }
