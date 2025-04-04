@@ -219,7 +219,7 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
                               }}
                               key={index}
                             >
-                              {message.id + message.content}
+                              {message.content}
                             </Box>
                           );
                         } else {
@@ -233,7 +233,7 @@ const ChatBox = ({ value, index, friend, stompClient, user, newMessage }) => {
                               }}
                               key={index}
                             >
-                              {message.id + message.content}
+                              {message.content}
                             </Box>
                           );
                         }
