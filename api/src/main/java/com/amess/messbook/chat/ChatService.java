@@ -37,7 +37,6 @@ public class ChatService {
 
     Chat getChatRoomAndCreateIfNotExist(String senderNickname, String receiverNickname) {
         Optional<Chat> optionalChat = chatRepository.findBySenderNicknameAndReceiverNickname(senderNickname, receiverNickname);
-        ;
         return optionalChat.orElseGet(() -> saveChatRoom(senderNickname, receiverNickname));
     }
 
