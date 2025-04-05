@@ -7,8 +7,9 @@ import com.amess.messbook.auth.entity.TokenScope;
 import com.amess.messbook.email.EmailService;
 import com.amess.messbook.email.EmailSubject;
 import com.amess.messbook.email.EmailTemplateName;
-import com.amess.messbook.social.entity.User;
+import com.amess.messbook.email.entity.Email;
 import com.amess.messbook.social.UserService;
+import com.amess.messbook.social.entity.User;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -40,8 +41,7 @@ public class AuthenticationService {
         Authentication auth = authenticationManager.authenticate(authenticationToken);
         var authenticatedUser = (User) auth.getPrincipal();
 
-        String jws = jwtService.newAuthenticationToken(authenticatedUser.getId());
-        return jws;
+        return jwtService.newAuthenticationToken(authenticatedUser.getId());
     }
 
     public User register(
@@ -77,14 +77,8 @@ public class AuthenticationService {
                 TokenScope.ACTIVATION.getScope()
         );
 
-        emailService.sendEmail(
-                user.getEmail(),
-                user.getNickname(),
-                token,
-                EmailSubject.WELCOME,
-                EmailTemplateName.ACCOUNT_ACTIVATION
-        );
-
+        Email welcomeEmail = emailService.createEmail(user.getEmail(), user.getNickname(), token, EmailSubject.WELCOME, EmailTemplateName.ACCOUNT_ACTIVATION);
+        emailService.sendEmail(welcomeEmail);
         return savedUser;
     }
 
@@ -109,32 +103,28 @@ public class AuthenticationService {
     }
 
     public void requestResetPassword(String email) throws MessagingException {
-        Optional<User> user = userService.findByEmail(email);
-        if (!user.isPresent()) {
+        Optional<User> optionalUser = userService.findByEmail(email);
+        if (optionalUser.isEmpty()) {
             var errorDetails = new ErrorDetails();
             errorDetails.addError("email", "email does not exist");
             throw new InvalidException(errorDetails);
         }
 
-        if (!user.get().isEnabled()) {
+        User user = optionalUser.get();
+        if (!user.isEnabled()) {
             var errorDetails = new ErrorDetails();
             errorDetails.addError("email", "user account must be activated");
             throw new InvalidException(errorDetails);
         }
 
         var token = tokenService.newToken(
-                user.get().getId(),
+                user.getId(),
                 Duration.ofMinutes(45),
                 TokenScope.PASSWORD_RESET.getScope()
         );
-
-        emailService.sendEmail(
-                user.get().getEmail(),
-                user.get().getNickname(),
-                token,
-                EmailSubject.PASSWORD_RESET,
-                EmailTemplateName.PASSWORD_RESET
-        );
+        
+        Email passwordResetEmail = emailService.createEmail(user.getEmail(), user.getNickname(), token, EmailSubject.PASSWORD_RESET, EmailTemplateName.PASSWORD_RESET);
+        emailService.sendEmail(passwordResetEmail);
     }
 
     private ErrorDetails validateAccountExistence(User user) {
@@ -161,8 +151,8 @@ public class AuthenticationService {
             }
 
             if (errorDetails.getErrors().containsKey("nickname") &&
-                    errorDetails.getErrors().containsKey("email") &&
-                    errorDetails.getErrors().containsKey("phoneNumber")
+                errorDetails.getErrors().containsKey("email") &&
+                errorDetails.getErrors().containsKey("phoneNumber")
             ) {
                 break;
             }
@@ -170,7 +160,7 @@ public class AuthenticationService {
             index += 1;
         }
 
-       return errorDetails;
+        return errorDetails;
     }
 
 
