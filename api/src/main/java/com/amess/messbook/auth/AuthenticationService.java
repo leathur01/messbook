@@ -2,6 +2,7 @@ package com.amess.messbook.auth;
 
 import com.amess.messbook.aop.exceptionhHandler.exception.ErrorDetails;
 import com.amess.messbook.aop.exceptionhHandler.exception.InvalidException;
+import com.amess.messbook.auth.dto.AccountRegistrationData;
 import com.amess.messbook.auth.entity.Token;
 import com.amess.messbook.auth.entity.TokenScope;
 import com.amess.messbook.email.EmailService;
@@ -20,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -44,42 +44,39 @@ public class AuthenticationService {
         return jwtService.newAuthenticationToken(authenticatedUser.getId());
     }
 
-    public User register(
-            String nickname,
-            String email,
-            String phoneNumber,
-            String password,
-            LocalDate dateOfBirth
-    ) throws MessagingException {
+    public User register(AccountRegistrationData registerData) throws MessagingException {
+        if (hasCountryCode(registerData.getPhoneNumber())) {
+            String localPhoneNumber = registerData.getPhoneNumber().replace("+84", "0");
+            registerData.setPhoneNumber(localPhoneNumber);
+        }
 
-        var user = User.builder()
-                .nickname(nickname)
-                .email(email)
-                .phoneNumber(phoneNumber)
-                .password(passwordEncoder.encode(password))
+        User user = createUserAccount(registerData);
+        validateAccountExistence(user);
+        User savedUser = userService.save(user);
+
+        var token = tokenService.newToken(user.getId(), Duration.ofDays(3), TokenScope.ACTIVATION.getScope());
+        Email welcomeEmail = emailService.createEmail(user.getEmail(), user.getNickname(), token, EmailSubject.WELCOME, EmailTemplateName.ACCOUNT_ACTIVATION);
+        emailService.sendEmail(welcomeEmail);
+
+        return savedUser;
+    }
+
+    private boolean hasCountryCode(String phoneNumber) {
+        return phoneNumber.contains("+84");
+    }
+
+    private User createUserAccount(AccountRegistrationData registerData) {
+        return User.builder()
+                .nickname(registerData.getNickname())
+                .email(registerData.getEmail())
+                .phoneNumber(registerData.getPhoneNumber())
+                .password(passwordEncoder.encode(registerData.getPassword()))
                 .bio("")
-                .dateOfBirth(dateOfBirth)
+                .dateOfBirth(registerData.getDateOfBirth())
                 .activated(false)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
-
-        var errorDetails = validateAccountExistence(user);
-        if (!errorDetails.getErrors().isEmpty()) {
-            throw new InvalidException(errorDetails);
-        }
-
-        User savedUser = userService.save(user);
-
-        var token = tokenService.newToken(
-                user.getId(),
-                Duration.ofDays(3),
-                TokenScope.ACTIVATION.getScope()
-        );
-
-        Email welcomeEmail = emailService.createEmail(user.getEmail(), user.getNickname(), token, EmailSubject.WELCOME, EmailTemplateName.ACCOUNT_ACTIVATION);
-        emailService.sendEmail(welcomeEmail);
-        return savedUser;
     }
 
     public User activate(Token validationToken) {
@@ -89,7 +86,7 @@ public class AuthenticationService {
                 LocalDateTime.now()
         );
 
-        if (!user.isPresent()) {
+        if (user.isEmpty()) {
             var errorDetails = new ErrorDetails();
             errorDetails.addError("token", "invalid or expired activation token");
             throw new InvalidException(errorDetails);
@@ -122,12 +119,12 @@ public class AuthenticationService {
                 Duration.ofMinutes(45),
                 TokenScope.PASSWORD_RESET.getScope()
         );
-        
+
         Email passwordResetEmail = emailService.createEmail(user.getEmail(), user.getNickname(), token, EmailSubject.PASSWORD_RESET, EmailTemplateName.PASSWORD_RESET);
         emailService.sendEmail(passwordResetEmail);
     }
 
-    private ErrorDetails validateAccountExistence(User user) {
+    private void validateAccountExistence(User user) {
         List<User> existedAccounts = userService.findExistedAccounts(
                 user.getNickname(),
                 user.getEmail(),
@@ -160,7 +157,9 @@ public class AuthenticationService {
             index += 1;
         }
 
-        return errorDetails;
+        if (!errorDetails.getErrors().isEmpty()) {
+            throw new InvalidException(errorDetails);
+        }
     }
 
 

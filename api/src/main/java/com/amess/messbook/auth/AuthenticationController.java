@@ -27,21 +27,8 @@ public class AuthenticationController {
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/register")
     public UserDTO register(@RequestBody @Valid AccountRegistrationData request) throws MessagingException {
-        // Discard the country code for easier phone number management since we only accept phone numbers in vietnam
-        var phoneNumber = request.getPhoneNumber();
-        if (request.getPhoneNumber().contains("+84")) {
-            phoneNumber = request.getPhoneNumber().replace("+84", "0");
-        }
-        var createdUser = authenticationService.register(
-                request.getNickname(),
-                request.getEmail(),
-                phoneNumber,
-                request.getPassword(),
-                request.getDateOfBirth()
-        );
-        var userDTO = userMapper.map(createdUser, UserDTO.class);
-
-        return userDTO;
+        var createdUser = authenticationService.register(request);
+        return userMapper.map(createdUser, UserDTO.class);
     }
 
     @ResponseStatus(HttpStatus.OK)
