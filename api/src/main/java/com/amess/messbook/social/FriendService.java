@@ -24,43 +24,52 @@ public class FriendService {
     private final UserRelationshipRepository userRelationshipRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
-    private final UserService userService;
 
     void addFriend(User sender, FriendRequestData friendRequest) {
-        if (sender.getNickname().equals(friendRequest.getNickname())) {
-            var errorDetails = new ErrorDetails();
-            errorDetails.addError("nickname", "Hm, didn't work. Double check that the username is correct.");
+        User receiver = getReceiver(sender, friendRequest);
+        Optional<UserRelationship> optionalUserRelationship = userRelationshipRepository.findByUnorderedId(receiver.getId(), sender.getId());
+        if (optionalUserRelationship.isPresent()) {
+            UserRelationship existedFriendRequest = optionalUserRelationship.get();
+            handleExistedFriendRequest(receiver, existedFriendRequest);
+        } else {
+            createFriendRequest(sender, receiver);
+            notificationService.sendFriendRequestNotification(receiver, sender);
+        }
+    }
+
+    private User getReceiver(User sender, FriendRequestData friendRequest) {
+        if (isSendingFriendRequestToSelf(sender, friendRequest)) {
+            var errorDetails = new ErrorDetails("nickname", "Hm, didn't work. Double check that the username is correct.");
             throw new InvalidException(errorDetails);
         }
 
         Optional<User> optionalUser = userRepository.findByNickname(friendRequest.getNickname());
         if (optionalUser.isEmpty()) {
-            var errorDetails = new ErrorDetails();
-            errorDetails.addError("nickname", "Hm, didn't work. Double check that the username is correct.");
+            var errorDetails = new ErrorDetails("nickname", "Hm, didn't work. Double check that the username is correct.");
             throw new InvalidException(errorDetails);
         }
-        User receiver = optionalUser.get();
+        return optionalUser.get();
+    }
 
-        // If the other user already sent a friend request to this user
-        // Then we simply accept it instead of sending another friend request
-        Optional<UserRelationship> optionalUserRelationship = userRelationshipRepository.findByUnorderedId(receiver.getId(), sender.getId());
-        if (optionalUserRelationship.isPresent()) {
-            var existedRelationship = optionalUserRelationship.get();
+    private boolean isSendingFriendRequestToSelf(User sender, FriendRequestData friendRequest) {
+        return sender.getNickname().equals(friendRequest.getNickname());
+    }
 
-            if (isRequestAlreadySentBy(receiver, existedRelationship) && existedRelationship.getStatus().equals("PENDING")) {
-                acceptRequest(existedRelationship);
-            } else if (existedRelationship.getStatus().equals("ACCEPTED")) {
-                var errorDetails = new ErrorDetails();
-                errorDetails.addError("nickname", "You're already friends with that user");
-                throw new InvalidException(errorDetails);
-            }
-            // If the request has been sent before, then return
-            return;
+    private void handleExistedFriendRequest(User receiver, UserRelationship friendRequest) {
+        if (isRequestAlreadySentAndIsPendingBy(receiver, friendRequest)) {
+            acceptRequest(friendRequest);
+        } else if (friendRequest.getStatus().equals("ACCEPTED")) {
+            var errorDetails = new ErrorDetails("nickname", "You're already friends with that user");
+            throw new InvalidException(errorDetails);
         }
+    }
 
-        // We add ar new record into the intermediate table directly instead of adding the UserRelationship to the User and let Hibernate save to the db
-        // Because we can't use the authenticated user fetched in the filter to add the new UserRelationship since the session has closed at the time we go to the controller layer
-        var userRelationship = UserRelationship.builder()
+    private boolean isRequestAlreadySentAndIsPendingBy(User user, UserRelationship existedRelationship) {
+        return existedRelationship.getId().getSenderId().equals(user.getId()) && existedRelationship.getStatus().equals("PENDING");
+    }
+
+    private void createFriendRequest(User sender, User receiver) {
+        UserRelationship userRelationship = UserRelationship.builder()
                 .id(new RelationshipId(sender.getId(), receiver.getId()))
                 .sender(sender)
                 .receiver(receiver)
@@ -69,16 +78,6 @@ public class FriendService {
                 .updatedAt(LocalDateTime.now())
                 .build();
         userRelationshipRepository.save(userRelationship);
-        notificationService.sendMultipleDevicesNotification(
-                receiver,
-                "New friend request",
-                "From " + sender.getNickname(),
-                "SEND_FRIEND_REQUEST"
-        );
-    }
-
-    private boolean isRequestAlreadySentBy(User user, UserRelationship existedRelationship) {
-        return existedRelationship.getId().getSenderId().equals(user.getId());
     }
 
     void removeFriendRequest(UUID senderId, UUID receiverID) {
@@ -91,33 +90,26 @@ public class FriendService {
     }
 
     void processRequestAcceptance(User receiver, UUID senderId) throws NoResourceFoundException {
-        var optionalUserRelationship = userRelationshipRepository.findById(new RelationshipId(senderId, receiver.getId()));
+        UserRelationship userRelationship = getUserRelationship(receiver, senderId);
+        acceptRequest(userRelationship);
+    }
 
+    private UserRelationship getUserRelationship(User receiver, UUID senderId) throws NoResourceFoundException {
+        var optionalUserRelationship = userRelationshipRepository.findById(new RelationshipId(senderId, receiver.getId()));
         if (optionalUserRelationship.isEmpty()) {
             throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
         }
-        var userRelationship = optionalUserRelationship.get();
-
-        acceptRequest(userRelationship);
-        // Does not need to check the validity of the senderId since it has been validated by the above code
-        // But check anyway for safety net
-        var optionalUser = userService.findById(senderId);
-        if (optionalUser.isEmpty()) {
-            throw new NoResourceFoundException(HttpMethod.valueOf(""), "");
-        }
-        notificationService.sendMultipleDevicesNotification(
-                optionalUser.get(),
-                "Friend request accepted",
-                receiver.getNickname() + " accepted your friend request",
-                "ACCEPT_FRIEND_REQUEST"
-        );
+        return optionalUserRelationship.get();
     }
 
-    private void acceptRequest(UserRelationship userRelationship) {
-        userRelationship.setStatus("ACCEPTED");
-        userRelationship.setUpdatedAt(LocalDateTime.now());
-        userRelationshipRepository.save(userRelationship);
+    private void acceptRequest(UserRelationship friendRequest) {
+        friendRequest.setStatus("ACCEPTED");
+        friendRequest.setUpdatedAt(LocalDateTime.now());
+        userRelationshipRepository.save(friendRequest);
 
+        User sender = friendRequest.getSender();
+        User receiver = friendRequest.getReceiver();
+        notificationService.sendRequestAcceptanceNotification(sender, receiver);
     }
 
     List<User> getFriendRequests(UUID userId, String direction) {

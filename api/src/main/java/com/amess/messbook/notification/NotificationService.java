@@ -96,4 +96,20 @@ public class NotificationService {
             // It can be ignored
         }
     }
+
+    public void sendFriendRequestNotification(User receiver, User sender) {
+        sendMultipleDevicesNotification(receiver,
+                "New friend request",
+                "From " + sender.getNickname(),
+                "SEND_FRIEND_REQUEST");
+    }
+
+    public void sendRequestAcceptanceNotification(User sender, User receiver) {
+        sendMultipleDevicesNotification(
+                sender,
+                "Friend request accepted",
+                receiver.getNickname() + " accepted your friend request",
+                "ACCEPT_FRIEND_REQUEST"
+        );
+    }
 }
