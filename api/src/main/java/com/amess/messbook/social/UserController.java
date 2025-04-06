@@ -26,7 +26,7 @@ public class UserController {
     private final ModelMapper modelMapper;
     private final UserService userService;
     private final UserRepository userRepository;
-    private final StorageService storageService;
+    private final ImageStorageService storageService;
 
     @GetMapping("/")
     public String hello() {

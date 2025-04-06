@@ -31,7 +31,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final StorageService storageService;
+    private final ImageStorageService storageService;
 
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);

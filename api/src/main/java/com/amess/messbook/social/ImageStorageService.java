@@ -1,9 +1,9 @@
 package com.amess.messbook.social;
 
-import com.amess.messbook.aop.exceptionhHandler.exception.ErrorDetails;
-import com.amess.messbook.aop.exceptionhHandler.exception.InvalidException;
 import com.amess.messbook.social.exception.StorageException;
 import com.amess.messbook.social.exception.StorageFileNotFoundException;
+import com.amess.messbook.util.error.ExceptionThrower;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -16,41 +16,57 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+@RequiredArgsConstructor
 @Service
-public class StorageService {
+public class ImageStorageService {
 
+    private final ExceptionThrower exceptionThrower;
     private static final long MAX_IMAGE_SIZE = 1024 * 1024; // 1 MB
 
     String storeImage(Path uploadPath, MultipartFile image) {
-        if (!isImageTypeValid(image)) {
-            var errorDetails = new ErrorDetails();
-            errorDetails.addError("image", "Image size exceeds the maximum allowed size of 1 MB");
-            throw new InvalidException(errorDetails);
-        }
-
-        if (image.getSize() > MAX_IMAGE_SIZE) {
-            var errorDetails = new ErrorDetails();
-            errorDetails.addError("image", "Invalid image type");
-            throw new InvalidException(errorDetails);
-        }
-
-        // Filename Sanitization: Use random filename instead of the user-provided one
-        String randomFilename = UUID.randomUUID() + "." + image.getOriginalFilename().split("\\.")[1];
+        validateImage(image);
+        String randomFilename = generateRandomFilename(image); // Filename Sanitization
         try {
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-            }
-
-            Path destinationFile = uploadPath.resolve(Paths.get(randomFilename));
-            try (InputStream inputStream = image.getInputStream()) {
-                Files.copy(inputStream, destinationFile,
-                        StandardCopyOption.REPLACE_EXISTING);
-            }
+            createFileDirectory(uploadPath);
+            Path destination = uploadPath.resolve(Paths.get(randomFilename));
+            storeToDestination(image, destination);
             return randomFilename;
         } catch (IOException e) {
             throw new StorageException("Failed to update your avatar. Please try again");
+        }
+    }
+
+    private String generateRandomFilename(MultipartFile image) {
+        // OriginalFilename cannot be null
+        String fileExtension = image.getOriginalFilename().split("\\.")[1];
+        return UUID.randomUUID() + "." + fileExtension;
+    }
+
+    private void createFileDirectory(Path uploadPath) throws IOException {
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+    }
+
+    private void storeToDestination(MultipartFile image, Path destination) throws IOException {
+        try (InputStream inputStream = image.getInputStream()) {
+            Files.copy(inputStream, destination, StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private void validateImage(MultipartFile image) {
+        if (!isImageTypeValid(image)) {
+            exceptionThrower.throwInvalidException("image", "Image size exceeds the maximum allowed size of 1 MB");
+        }
+
+        if (image.getSize() > MAX_IMAGE_SIZE) {
+            exceptionThrower.throwInvalidException("image", "Invalid image type");
         }
     }
 
@@ -72,14 +88,18 @@ public class StorageService {
 
     private boolean isImageTypeValid(MultipartFile image) {
         // This also check if the request is empty
-        // Quick check for simple file upload attacks
-        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png");
-        if (!allowedTypes.contains(image.getContentType()) || image.getOriginalFilename() == null) {
-            return false;
-        }
+        if (isSimpleFileUploadAttack(image)) return false;
+        return isDoubleExtension(image);
+    }
 
-        // The originalFileName cannot be null at this point
-        // Check for double extension
-        return image.getOriginalFilename().split("\\.").length < 3;
+    private boolean isSimpleFileUploadAttack(MultipartFile file) {
+        List<String> allowedTypes = Arrays.asList("image/jpeg", "image/png");
+        return !allowedTypes.contains(file.getContentType()) || file.getOriginalFilename() == null;
+    }
+
+    private boolean isDoubleExtension(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) return false;
+        return originalFilename.split("\\.").length < 3;
     }
 }
